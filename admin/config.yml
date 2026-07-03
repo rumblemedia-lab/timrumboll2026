@@ -1,0 +1,76 @@
+# Decap CMS configuration
+# See README.md for how backend auth is wired up.
+
+backend:
+  name: github
+  repo: rumblemeddia-lab/timrumboll2026   # <-- update this
+  branch: main
+  base_url: https://your-oauth-proxy.example.com  # <-- update this (see README)
+
+# Where Decap writes uploaded audio/image files
+media_folder: "assets/uploads"
+public_folder: "/assets/uploads"
+
+collections:
+  - name: "showreels"
+    label: "Showreels (homepage)"
+    files:
+      - name: "showreels"
+        label: "Showreel list"
+        file: "_data/showreels.yml"
+        fields:
+          - label: "Reels"
+            name: "reels"
+            widget: "list"
+            fields:
+              - { label: "Category", name: "category", widget: "string" }
+              - { label: "Title", name: "title", widget: "string" }
+              - { label: "Audio file", name: "file", widget: "file", media_folder: "/assets/audio", public_folder: "/assets/audio" }
+              - { label: "Duration (e.g. 1:42)", name: "duration", widget: "string" }
+
+  - name: "projects"
+    label: "Projects"
+    folder: "_projects"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "Client", name: "client", widget: "string" }
+      - { label: "Sector", name: "sector", widget: "string", hint: "e.g. Radio & TV, Animation, Explainer video" }
+      - { label: "Date", name: "date", widget: "datetime" }
+      - { label: "Short excerpt (shown in listings)", name: "excerpt", widget: "text" }
+      - { label: "Audio sample", name: "audio", widget: "file", media_folder: "/assets/audio", public_folder: "/assets/audio", required: false }
+      - { label: "Duration (e.g. 0:52)", name: "duration", widget: "string", required: false }
+      - { label: "Full write-up", name: "body", widget: "markdown" }
+
+  - name: "notes"
+    label: "Notes"
+    folder: "_notes"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Date", name: "date", widget: "datetime" }
+      - { label: "Short excerpt (shown in listings)", name: "excerpt", widget: "text" }
+      - { label: "Body", name: "body", widget: "markdown" }
+
+  - name: "contact"
+    label: "Contact details (homepage)"
+    files:
+      - name: "contact"
+        label: "Contact info"
+        file: "_data/contact.yml"
+        fields:
+          - { label: "Email", name: "email", widget: "string" }
+          - { label: "Phone", name: "phone", widget: "string" }
+          - { label: "Remote direction note", name: "remote_note", widget: "string" }
+          - { label: "Turnaround note", name: "turnaround", widget: "string" }
+
+  - name: "pages"
+    label: "Pages"
+    files:
+      - name: "about"
+        label: "About page"
+        file: "about.md"
+        fields:
+          - { label: "Title", name: "title", widget: "string" }
+          - { label: "Body", name: "body", widget: "markdown" }

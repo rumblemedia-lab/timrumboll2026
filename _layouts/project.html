@@ -1,0 +1,24 @@
+---
+layout: default
+---
+<div class="wrap content-page">
+  <p class="eyebrow"><span class="tally" aria-hidden="true"></span>{{ page.sector }} &middot; {{ page.date | date: "%B %Y" }}</p>
+  <h1>{{ page.client }}</h1>
+  <p class="lede" style="margin-top:0.75rem;">{{ page.excerpt }}</p>
+
+  {% if page.audio %}
+  <div class="reel-card" style="max-width:480px; margin:2rem 0;">
+    <div class="reel-meta">
+      <span class="reel-cat">Listen</span>
+      {% if page.duration %}<span class="reel-duration">{{ page.duration }}</span>{% endif %}
+    </div>
+    <audio controls preload="none" src="{{ page.audio | relative_url }}"></audio>
+  </div>
+  {% endif %}
+
+  <div class="content-body reveal">
+    {{ content }}
+  </div>
+
+  <p style="margin-top:2.5rem;"><a class="btn btn-ghost" href="{{ '/projects/' | relative_url }}">&larr; All projects</a></p>
+</div>

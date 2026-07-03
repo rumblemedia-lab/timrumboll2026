@@ -1,0 +1,11 @@
+---
+layout: default
+---
+<div class="wrap content-page">
+  <p class="eyebrow"><span class="tally" aria-hidden="true"></span>{{ page.date | date: "%d %B %Y" }}</p>
+  <h1>{{ page.title }}</h1>
+  <div class="content-body">
+    {{ content }}
+  </div>
+  <p style="margin-top:2.5rem;"><a class="btn btn-ghost" href="{{ '/notes/' | relative_url }}">&larr; All notes</a></p>
+</div>

@@ -1,0 +1,109 @@
+---
+layout: default
+title: Home
+---
+<section class="hero" id="hero">
+  <div class="hero-center">
+    <h1 class="hero-name reveal-lines">
+      <span class="line">Tim</span>
+      <span class="line">Rumboll</span>
+    </h1>
+
+    <div class="reel-trigger" id="reelTrigger">
+      <button class="play-btn" id="playBtn" type="button" aria-label="Play showreel" aria-expanded="false">
+        <span class="icon-play" aria-hidden="true"></span>
+        <span class="icon-pause" aria-hidden="true"></span>
+      </button>
+      <span class="reel-label">showreel</span>
+      <div class="reel-player">
+        <audio id="reelAudio" preload="none" src="{{ '/assets/audio/main-showreel.mp3' | relative_url }}"></audio>
+        <div class="reel-progress"><div class="reel-progress-fill" id="reelProgressFill"></div></div>
+      </div>
+    </div>
+
+    <h2 class="hero-tagline reveal-lines">
+      <span class="line">Northern</span>
+      <span class="line">Male</span>
+      <span class="line">Voice Over</span>
+      <span class="line">Artist</span>
+    </h2>
+  </div>
+
+  <a class="hero-aside hero-aside-right" href="#contact">get in touch</a>
+  <a class="hero-aside hero-aside-left" href="#showreels">hear more</a>
+</section>
+
+<section class="section" id="showreels">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">Showreels</p>
+      <h2>Sample the voice, by category</h2>
+      <p>Four short reels &mdash; pick the one closest to your brief.</p>
+    </div>
+    <div class="reel-grid">
+      {% for reel in site.data.showreels %}
+      <div class="reel-card reveal">
+        <div class="reel-meta">
+          <span class="reel-cat">{{ reel.category }}</span>
+          <span class="reel-duration">{{ reel.duration }}</span>
+        </div>
+        <h3>{{ reel.title }}</h3>
+        <audio controls preload="none" src="{{ '/assets/audio/' | append: reel.file | relative_url }}"></audio>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">Recent projects</p>
+      <h2>Work I've voiced lately</h2>
+      <p>A running log of real briefs &mdash; client, sector and a sample from each.</p>
+    </div>
+    <div class="project-log">
+      {% assign recent_projects = site.projects | sort: 'date' | reverse | limit: 4 %}
+      {% for project in recent_projects %}
+      <a class="project-row reveal" href="{{ project.url | relative_url }}">
+        <span class="project-date">{{ project.date | date: "%b %Y" }}</span>
+        <span>
+          <span class="project-client">{{ project.client }}</span>
+          <div class="project-excerpt">{{ project.excerpt }}</div>
+        </span>
+        <span class="project-sector">{{ project.sector }}</span>
+      </a>
+      {% endfor %}
+    </div>
+    <p style="margin-top:2rem;" class="reveal"><a class="btn btn-ghost" href="{{ '/projects/' | relative_url }}">View all projects &rarr;</a></p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">About</p>
+      <h2>Sheffield-based, remote-ready</h2>
+      <p>Professionally voicing work since 2008, full-time since 2012. Broadcast-quality home studio with Source Connect Now for live-directed sessions, or self-produced turnaround within 24 hours for most briefs.</p>
+    </div>
+    <a class="btn btn-ghost reveal" href="{{ '/about/' | relative_url }}">More about Tim &rarr;</a>
+  </div>
+</section>
+
+<section class="section" id="contact" style="border-bottom:none;">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">Get in touch</p>
+      <h2>Let's get your script voiced</h2>
+      <p>The fastest way to get a quote is email, with your script (or a rough word count) and where the finished audio needs to go.</p>
+    </div>
+    <div class="reveal">
+      <a class="btn btn-primary" href="mailto:{{ site.data.contact.email }}">{{ site.data.contact.email }}</a>
+      <p style="margin-top:1rem; color:var(--color-text-muted);">
+        Phone: {{ site.data.contact.phone }}<br>
+        {{ site.data.contact.remote_note }}<br>
+        {{ site.data.contact.turnaround }}
+      </p>
+    </div>
+  </div>
+</section>

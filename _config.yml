@@ -1,0 +1,51 @@
+title: Tim Rumboll
+tagline: Northern male voice over
+description: >-
+  Tim Rumboll is a professional male voice over artist based in Sheffield,
+  specialising in commercials, corporate narration, on-hold and explainer
+  video voice overs, with remote recording available worldwide.
+url: "https://www.timrumboll.com"
+baseurl: ""
+
+author:
+  name: Tim Rumboll
+  email: hello@timrumboll.com
+
+# Build settings
+markdown: kramdown
+sass:
+  style: compressed
+
+collections:
+  projects:
+    output: true
+    permalink: /projects/:path/
+  notes:
+    output: true
+    permalink: /notes/:path/
+
+defaults:
+  - scope:
+      path: ""
+      type: "projects"
+    values:
+      layout: "project"
+  - scope:
+      path: ""
+      type: "notes"
+    values:
+      layout: "note"
+  - scope:
+      path: ""
+    values:
+      layout: "page"
+
+plugins:
+  - jekyll-sitemap
+  - jekyll-feed
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - README.md
+  - node_modules

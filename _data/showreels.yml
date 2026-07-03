@@ -1,0 +1,19 @@
+# Edit this list to control the showreels shown on the homepage.
+# Keep it to 4-5 — this is a sampler, not the full archive.
+# `file` paths are relative to /assets/audio/
+- category: Commercial
+  title: Commercial reel
+  file: commercial-reel.mp3
+  duration: "1:42"
+- category: Corporate & narration
+  title: Corporate and narration reel
+  file: corporate-reel.mp3
+  duration: "2:05"
+- category: E-learning
+  title: E-learning reel
+  file: elearning-reel.mp3
+  duration: "1:30"
+- category: On-hold / IVR
+  title: On-hold and IVR reel
+  file: on-hold-reel.mp3
+  duration: "1:10"
