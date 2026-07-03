@@ -183,7 +183,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     var scrambleMs = 3000;
-    var flipInterval = 90; // ms between successive random flips on a slot
+    var flipInterval = 180; // ms between successive random flips on a slot
     var flipDuration = 0.03; // seconds, each slide-in/slide-out tween - short relative
                               // to flipInterval so slots read as a crisp flicker rather
                               // than a constant blur of overlapping glyphs
