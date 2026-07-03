@@ -152,9 +152,25 @@ body.is-loaded .reveal-lines .line { opacity: 1; transform: translateY(0); }
 
 .hero-scramble-line {
   white-space: nowrap;
+  overflow: hidden;
+  height: 0.98em;
+  line-height: 0.98em;
 }
-.hero-scramble .scramble-char {
+.scramble-slot {
+  display: inline-block;
+  overflow: hidden;
+  height: 0.98em;
+  line-height: 0.98em;
+  vertical-align: top;
+  position: relative;
+}
+.scramble-glyph {
+  display: block;
+  line-height: 0.98em;
   color: var(--color-text-muted);
+}
+.scramble-glyph.is-settled {
+  color: var(--color-text);
 }
 
 .hero-aside {
