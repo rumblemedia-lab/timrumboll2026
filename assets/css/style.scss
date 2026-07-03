@@ -111,6 +111,8 @@ body:not(.has-hero-header) main { padding-top: calc(var(--header-h) + 12px); }
 /* Hero -------------------------------------------------------------------- */
 .hero {
   --hero-font-size: clamp(2.8rem, 6vw, 4.25rem);
+  --play-btn-size: 56px;
+  --reel-gap: 1.1rem;
   position: relative;
   min-height: 100svh;
   display: flex;
@@ -184,6 +186,18 @@ body.is-loaded .hero-aside { opacity: 1; transform: translateY(0); }
   .reel-progress { width: 100px; }
 }
 
+/* Scale the play button, its caption, and the hero-aside labels up further
+   on laptop/desktop, proportionate to the (also larger here) hero heading -
+   mobile keeps the sizing already tuned above. */
+@media (min-width: 1024px) {
+  .hero {
+    --play-btn-size: 72px;
+    --reel-gap: 1.3rem;
+  }
+  .reel-label { font-size: 1.75rem; }
+  .hero-aside { font-size: 1.6rem; }
+}
+
 /* Showreel play / expand-to-player widget --------------------------------- */
 .reel-trigger {
   position: relative;
@@ -201,8 +215,8 @@ body.is-loaded .reel-trigger { opacity: 1; transform: translateY(0); }
   background: none;
   border: none;
   padding: 0;
-  width: 56px;
-  height: 56px;
+  width: var(--play-btn-size);
+  height: var(--play-btn-size);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -217,8 +231,8 @@ body.is-loaded .reel-trigger { opacity: 1; transform: translateY(0); }
 .play-btn.is-playing { animation: none; }
 
 .play-icon {
-  width: 56px;
-  height: 56px;
+  width: var(--play-btn-size);
+  height: var(--play-btn-size);
   display: block;
 }
 .play-icon-ring {
@@ -252,7 +266,7 @@ body.is-loaded .play-icon-triangle { opacity: 1; transform: scale(1); }
 .reel-caption {
   position: absolute;
   top: 50%;
-  left: calc(50% + 28px + 1.1rem);
+  left: calc(50% + (var(--play-btn-size) / 2) + var(--reel-gap));
   transform: translateY(-50%);
   white-space: nowrap;
 }
