@@ -204,7 +204,7 @@ body.is-loaded .hero-aside { opacity: 1; transform: translateY(0); }
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: clamp(1.25rem, 4vw, 1.75rem) 0;
+  margin: clamp(1rem, 4vw, 1.5rem) 0;
   opacity: 0;
   transform: translateY(16px);
   transition: opacity 0.8s var(--ease-out-expo) 0.35s, transform 0.8s var(--ease-out-expo) 0.35s;
