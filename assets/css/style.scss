@@ -147,10 +147,6 @@ body.is-loaded .reveal-lines .line { opacity: 1; transform: translateY(0); }
   margin-top: 0.75rem;
 }
 
-.hero-scramble-line {
-  font-size: clamp(1.5rem, 4.6vw, 3rem);
-  margin: 0.15em 0;
-}
 .hero-scramble .scramble-char {
   color: var(--color-text-muted);
 }

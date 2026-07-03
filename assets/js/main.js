@@ -183,7 +183,7 @@ document.addEventListener('DOMContentLoaded', function () {
         doneCount++;
         if (item.to) output += item.to;
       } else if (elapsed >= item.start) {
-        if (!item.char || Math.random() < 0.3) {
+        if (!item.char || Math.random() < 0.15) {
           item.char = this.randomChar();
         }
         output += '<span class="scramble-char">' + item.char + '</span>';
