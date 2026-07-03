@@ -110,7 +110,7 @@ body:not(.has-hero-header) main { padding-top: calc(var(--header-h) + 12px); }
 
 /* Hero -------------------------------------------------------------------- */
 .hero {
-  --hero-font-size: clamp(2.8rem, 8.5vw, 6rem);
+  --hero-font-size: clamp(2.8rem, 6vw, 4.25rem);
   position: relative;
   min-height: 100svh;
   display: flex;
@@ -148,6 +148,9 @@ body.is-loaded .reveal-lines .line { opacity: 1; transform: translateY(0); }
   margin-top: 0.75rem;
 }
 
+.hero-scramble-line {
+  white-space: nowrap;
+}
 .hero-scramble .scramble-char {
   color: var(--color-text-muted);
 }
