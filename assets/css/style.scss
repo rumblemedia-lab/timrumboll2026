@@ -110,6 +110,7 @@ body:not(.has-hero-header) main { padding-top: calc(var(--header-h) + 12px); }
 
 /* Hero -------------------------------------------------------------------- */
 .hero {
+  --hero-font-size: clamp(2.8rem, 8.5vw, 6rem);
   position: relative;
   min-height: 100svh;
   display: flex;
@@ -137,13 +138,13 @@ body.is-loaded .reveal-lines .line { opacity: 1; transform: translateY(0); }
 
 .hero-name {
   font-weight: 800;
-  font-size: clamp(2.8rem, 8vw, 5.5rem);
+  font-size: var(--hero-font-size);
   line-height: 0.98;
 }
 .hero-tagline {
   font-weight: 800;
-  font-size: clamp(2.1rem, 6.5vw, 4.4rem);
-  line-height: 1;
+  font-size: var(--hero-font-size);
+  line-height: 0.98;
   margin-top: 0.75rem;
 }
 
