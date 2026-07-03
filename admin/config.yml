@@ -3,7 +3,7 @@
 
 backend:
   name: github
-  repo: rumblemeddia-lab/timrumboll2026   # <-- update this
+  repo: rumblemedia-lab/timrumboll2026
   branch: main
   base_url: https://your-oauth-proxy.example.com  # <-- update this (see README)
 
