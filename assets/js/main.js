@@ -158,10 +158,17 @@ document.addEventListener('DOMContentLoaded', function () {
      Hero word-scramble: cycles through a list of words. Each character
      position is a small overflow-hidden "slot" (built once via SplitText);
      while decoding, the outgoing glyph slides up and out while the
-     incoming glyph slides up into place from below, repeating rapidly
-     through random letters before landing on the correct character - a
-     vertical slot-reel decode. Settles after `scrambleMs`, holds for
-     `holdMs`, then decodes into the next word.
+     incoming glyph slides up into place from below, repeating through
+     random letters before landing on the correct character - a vertical
+     slot-reel decode. Holds for `holdMs` once fully settled, then decodes
+     into the next word.
+
+     Flip cadence is eased rather than fixed-interval: each character
+     flips through `flipsPerChar` random letters plus one final settling
+     flip, with the GAP between successive flips slow at the start and
+     end (~maxGapMs) and fast in the middle (~minGapMs). There's no fixed
+     total-duration target anymore - it falls out of flipsPerChar x the
+     eased gaps x the per-character stagger.
      ------------------------------------------------------------------- */
   function initHeroScramble() {
     var el = document.getElementById('heroScramble');
@@ -182,12 +189,33 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
-    var scrambleMs = 3000;
-    var flipInterval = 180; // ms between successive random flips on a slot
-    var flipDuration = 0.03; // seconds, each slide-in/slide-out tween - short relative
-                              // to flipInterval so slots read as a crisp flicker rather
-                              // than a constant blur of overlapping glyphs
+    var flipsPerChar = 10; // random flips before the final settling flip
+    var minGapMs = 250; // gap between flips at the fastest point (middle of the sequence)
+    var maxGapMs = 500; // gap between flips at the slowest point (start/end of the sequence)
+    var staggerStepMs = 80; // ripple delay between the start of each character's own sequence
+    var flipDuration = 0.03; // seconds, each slide-in/slide-out tween - kept short so
+                              // flips read as a crisp flicker rather than a blur
     var letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+
+    // Sample GSAP's power2.inOut ease against a triangular "distance from
+    // the middle of the sequence" value: that ease is slow-velocity at its
+    // own edges (0 and 1) and fast in the middle, so applying it to
+    // `centered` (1 at the sequence's edges, 0 at its middle) produces a
+    // smoothed bowl - eased(1)=1 -> maxGapMs at the edges, eased(0)=0 ->
+    // minGapMs in the middle.
+    var bowlEase = gsap.parseEase('power2.inOut');
+    function gapForFlipIndex(g, totalGaps) {
+      var t = g / (totalGaps - 1);
+      var centered = Math.abs(t - 0.5) * 2;
+      var eased = bowlEase(centered);
+      return minGapMs + (maxGapMs - minGapMs) * eased;
+    }
+
+    var totalGaps = flipsPerChar + 1; // +1 for the final settling flip
+    var sequenceDurationMs = 0;
+    for (var gi = 0; gi < totalGaps; gi++) {
+      sequenceDurationMs += gapForFlipIndex(gi, totalGaps);
+    }
 
     var longest = words.reduce(function (a, b) { return b.length > a.length ? b : a; });
     el.textContent = longest;
@@ -243,18 +271,18 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function scheduleSlot(i, toChar) {
-      // Same staggered cascade as before: character i starts decoding
-      // partway through the first half of the animation, and every slot
-      // has an equal-length active window so the very last character's
-      // final flip lands exactly on `scrambleMs`.
-      var start = (i / maxLen) * scrambleMs * 0.5;
-      var end = scrambleMs * (0.5 + 0.5 * ((i + 1) / maxLen));
-      for (var t = start; t < end; t += flipInterval) {
-        (function (time) {
-          gsap.delayedCall(time / 1000, function () { doFlip(i, randomLetter(), false); });
-        })(t);
+      // Ripple: character i's own eased flip sequence starts staggerStepMs
+      // later than character i-1's, left-to-right across the word.
+      var t = i * staggerStepMs;
+      for (var g = 0; g < totalGaps; g++) {
+        t += gapForFlipIndex(g, totalGaps);
+        var isFinal = (g === totalGaps - 1);
+        (function (time, final) {
+          gsap.delayedCall(time / 1000, function () {
+            doFlip(i, final ? toChar : randomLetter(), final);
+          });
+        })(t, isFinal);
       }
-      gsap.delayedCall(end / 1000, function () { doFlip(i, toChar, true); });
     }
 
     var index = 0;
@@ -263,7 +291,11 @@ document.addEventListener('DOMContentLoaded', function () {
       for (var i = 0; i < maxLen; i++) {
         scheduleSlot(i, toChars[i] || '');
       }
-      gsap.delayedCall(scrambleMs / 1000, function () {
+      // The last character starts latest and takes the same eased-sequence
+      // duration as every other character, so it's always the one that
+      // settles last.
+      var totalSettleMs = (maxLen - 1) * staggerStepMs + sequenceDurationMs;
+      gsap.delayedCall(totalSettleMs / 1000, function () {
         gsap.delayedCall(holdMs / 1000, function () {
           index = (index + 1) % words.length;
           cycle();
