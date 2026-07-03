@@ -10,11 +10,19 @@ title: Home
     </h1>
 
     <div class="reel-trigger" id="reelTrigger">
-      <button class="play-btn" id="playBtn" type="button" aria-label="Play showreel" aria-expanded="false">
-        <span class="icon-play" aria-hidden="true"></span>
-        <span class="icon-pause" aria-hidden="true"></span>
+      <button class="play-btn" id="playBtn" type="button" aria-label="Listen to showreel" aria-expanded="false">
+        <svg class="play-icon" viewBox="0 0 64 64" aria-hidden="true">
+          <circle class="play-icon-ring" cx="32" cy="32" r="29" fill="none"
+            stroke="currentColor" stroke-width="2" pathLength="100"/>
+          <polygon class="play-icon-triangle" points="26,20 46,32 26,44"
+            fill="currentColor"/>
+          <g class="play-icon-pause">
+            <rect x="24" y="20" width="6" height="24" fill="currentColor"/>
+            <rect x="34" y="20" width="6" height="24" fill="currentColor"/>
+          </g>
+        </svg>
       </button>
-      <span class="reel-label">showreel</span>
+      <span class="reel-label">listen</span>
       <div class="reel-player">
         <audio id="reelAudio" preload="none" src="{{ '/assets/audio/main-showreel.mp3' | relative_url }}"></audio>
         <div class="reel-progress"><div class="reel-progress-fill" id="reelProgressFill"></div></div>
