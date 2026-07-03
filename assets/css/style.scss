@@ -181,13 +181,15 @@ body.is-loaded .hero-aside { opacity: 1; transform: translateY(0); }
     right: 7%;
     bottom: 9%;
   }
+  .reel-progress { width: 100px; }
 }
 
 /* Showreel play / expand-to-player widget --------------------------------- */
 .reel-trigger {
-  display: inline-flex;
+  position: relative;
+  display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 1.1rem;
   margin: clamp(1.25rem, 4vw, 1.75rem) 0;
   opacity: 0;
   transform: translateY(16px);
@@ -247,23 +249,49 @@ body.is-loaded .play-icon-triangle { opacity: 1; transform: scale(1); }
 }
 .play-btn.is-playing .play-icon-pause { opacity: 1; }
 
+.reel-caption {
+  position: absolute;
+  top: 50%;
+  left: calc(50% + 28px + 1.1rem);
+  transform: translateY(-50%);
+  white-space: nowrap;
+}
+
+.reel-label,
+.reel-player {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transition: opacity 0.35s var(--ease-out-expo), transform 0.35s var(--ease-out-expo);
+}
+
 .reel-label {
   font-family: var(--font-accent);
   font-style: italic;
   font-weight: 500;
   font-size: 1.45rem;
+  opacity: 1;
+  transform: translateY(-50%) translateY(0);
+}
+.reel-trigger.is-playing .reel-label {
+  opacity: 0;
+  transform: translateY(-50%) translateY(-14px);
+  pointer-events: none;
 }
 
 .reel-player {
   display: flex;
   align-items: center;
   gap: 0.7rem;
-  max-width: 0;
   opacity: 0;
-  overflow: hidden;
-  transition: max-width 0.55s var(--ease-out-expo), opacity 0.3s ease 0.1s;
+  transform: translateY(-50%) translateY(14px);
+  pointer-events: none;
 }
-.reel-trigger.is-playing .reel-player { max-width: 220px; opacity: 1; }
+.reel-trigger.is-playing .reel-player {
+  opacity: 1;
+  transform: translateY(-50%) translateY(0);
+  pointer-events: auto;
+}
 .reel-progress {
   width: 160px;
   height: 2px;
@@ -294,6 +322,12 @@ body.is-loaded .play-icon-triangle { opacity: 1; transform: scale(1); }
     transition: none !important;
     animation: none !important;
     stroke-dashoffset: 0 !important;
+  }
+  /* .reel-label/.reel-player each have two valid end-states gated by
+     .is-playing, so only the transition itself is disabled here -
+     the class-based opacity/transform rules still decide which one shows. */
+  .reel-label, .reel-player {
+    transition: none !important;
   }
 }
 
