@@ -135,6 +135,10 @@ document.addEventListener('DOMContentLoaded', function () {
     var asideLeft = hero.querySelector('.hero-aside-left');
     var asideRight = hero.querySelector('.hero-aside-right');
 
+    var aboutPhoto = document.querySelector('.about-intro-photo');
+    var aboutHeading = document.querySelector('.about-intro-heading');
+    var aboutBody = document.querySelector('.about-intro-body');
+
     // The aside links play their own CSS entrance fade/slide-in on load.
     // GSAP force-renders a tween's start state the moment it's created, so
     // handing an element to GSAP before that entrance has finished would
@@ -197,6 +201,24 @@ document.addEventListener('DOMContentLoaded', function () {
       // Same scroll range as the hero content, but each element recedes to
       // its own z-depth so the three read as separate parallax layers.
       tl.to(heroShrink, { scale: 0.7, z: isMobile ? 0 : -650, opacity: 0, ease: 'none' }, 0);
+
+      // About section slides in on the same shared timeline/progress as the
+      // hero disappearing - not a second, independent ScrollTrigger. Photo
+      // slides from the left across the whole timeline; heading slides from
+      // the right and settles at the halfway point; body copy starts right
+      // where the heading finishes and settles alongside the photo at the
+      // end. xPercent (not a fixed px offset) scales with each element's own
+      // width, so the off-screen start clears the viewport at any width -
+      // .about-intro has overflow:hidden to contain it either way.
+      if (aboutPhoto && aboutHeading && aboutBody) {
+        gsap.set(aboutPhoto, { xPercent: -100, opacity: 0 });
+        gsap.set(aboutHeading, { xPercent: 100, opacity: 0 });
+        gsap.set(aboutBody, { xPercent: 100, opacity: 0 });
+
+        tl.to(aboutPhoto, { xPercent: 0, opacity: 1, ease: 'none', duration: 0.5 }, 0);
+        tl.to(aboutHeading, { xPercent: 0, opacity: 1, ease: 'none', duration: 0.25 }, 0);
+        tl.to(aboutBody, { xPercent: 0, opacity: 1, ease: 'none', duration: 0.25 }, 0.25);
+      }
 
       whenEntranceSettled(function () {
         if (asideLeft) {

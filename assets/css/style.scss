@@ -385,12 +385,21 @@ body.is-loaded .play-icon-triangle { opacity: 1; transform: scale(1); }
   position: relative;
   z-index: 2;
   background: var(--color-bg);
+  // clips the photo/heading/body copy's off-screen slide-in starting
+  // position (see main.js) so it can't introduce horizontal scroll
+  overflow: hidden;
+  // .hero's ScrollTrigger pin reserves a spacer sized to its own height
+  // PLUS the pin's scroll distance (one viewport height each), so without
+  // this, .about-intro's entrance would finish entirely off-screen before
+  // ever scrolling into view. Pulling it up by one viewport height lines
+  // its reveal up with the hero's pinned 0->1 progress instead.
+  margin-top: -100svh;
 }
 .about-intro-grid {
   display: flex;
-  align-items: center;
-  gap: 3rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2rem;
 }
 .about-intro-photo {
   width: 260px;
@@ -400,9 +409,18 @@ body.is-loaded .play-icon-triangle { opacity: 1; transform: scale(1); }
   background: var(--color-surface);
   flex-shrink: 0;
 }
-.about-intro-copy { flex: 1 1 340px; }
+.about-intro-copy { width: 100%; }
 .about-intro-copy h2 { margin-bottom: 1rem; }
 .about-intro-copy p { color: var(--color-text-muted); margin: 0 0 1rem; }
+
+@media (min-width: 761px) {
+  .about-intro-grid {
+    flex-direction: row;
+    align-items: center;
+    gap: 3rem;
+  }
+  .about-intro-copy { width: auto; flex: 1 1 340px; }
+}
 
 /* Showreel cards ----------------------------------------------------------- */
 .reel-grid {
