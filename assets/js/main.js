@@ -196,7 +196,12 @@ document.addEventListener('DOMContentLoaded', function () {
           asideLeft.classList.add('is-parallaxing');
         }
         if (asideRight) {
-          tl.to(asideRight, { z: isMobile ? 0 : -900, opacity: 0, ease: 'none' }, 0);
+          // opacity fades linearly like the other two (so it stays comparably
+          // visible throughout), but z recedes on its own curve - faster
+          // early, slower late - so its motion reads as distinct, not just
+          // a different endpoint
+          tl.to(asideRight, { opacity: 0, ease: 'none' }, 0);
+          tl.to(asideRight, { z: isMobile ? 0 : -550, ease: isMobile ? 'none' : 'sine.out' }, 0);
           asideRight.classList.add('is-parallaxing');
         }
         tl.progress(tl.progress()); // re-render at current scroll position now the tweens exist
