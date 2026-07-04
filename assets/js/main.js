@@ -109,6 +109,7 @@ document.addEventListener('DOMContentLoaded', function () {
      ------------------------------------------------------------------- */
   var header = document.querySelector('.site-header');
   var hero = document.getElementById('hero');
+  var heroAboutStack = document.querySelector('.hero-about-stack');
 
   function initHeaderRevealFallback() {
     if (header && hero && 'IntersectionObserver' in window) {
@@ -132,9 +133,18 @@ document.addEventListener('DOMContentLoaded', function () {
     var heroShrink = hero.querySelector('.hero-shrink');
     if (!heroShrink) { initHeaderRevealFallback(); return; }
 
+    if (!heroAboutStack) { initHeaderRevealFallback(); return; }
+    // Only turn on the absolute-positioned overlap once we're sure GSAP is
+    // actually going to drive it - without this class, .hero and
+    // .about-intro just stack normally (About, opaque and higher z-index,
+    // would otherwise permanently hide the hero with no scroll effect to
+    // ever reveal it).
+    heroAboutStack.classList.add('is-stacked');
+
     var asideLeft = hero.querySelector('.hero-aside-left');
     var asideRight = hero.querySelector('.hero-aside-right');
 
+    var aboutIntro = document.querySelector('.about-intro');
     var aboutPhoto = document.querySelector('.about-intro-photo');
     var aboutHeading = document.querySelector('.about-intro-heading');
     var aboutBody = document.querySelector('.about-intro-body');
@@ -187,7 +197,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       var tl = gsap.timeline({
         scrollTrigger: {
-          trigger: hero,
+          trigger: heroAboutStack,
           start: 'top top',
           end: '+=100%',
           scrub: true,
@@ -202,14 +212,30 @@ document.addEventListener('DOMContentLoaded', function () {
       // its own z-depth so the three read as separate parallax layers.
       tl.to(heroShrink, { scale: 0.7, z: isMobile ? 0 : -650, opacity: 0, ease: 'none' }, 0);
 
-      // About section slides in on the same shared timeline/progress as the
-      // hero disappearing - not a second, independent ScrollTrigger. Photo
-      // slides from the left across the whole timeline; heading slides from
-      // the right and settles at the halfway point; body copy starts right
-      // where the heading finishes and settles alongside the photo at the
-      // end. xPercent (not a fixed px offset) scales with each element's own
-      // width, so the off-screen start clears the viewport at any width -
-      // .about-intro has overflow:hidden to contain it either way.
+      // About now sits in the exact same rectangle as the hero (both
+      // position:absolute inset:0 in .hero-about-stack), so its own opaque
+      // background - not just its content - would otherwise cover the hero
+      // instantly rather than progressively. Fade the background itself in
+      // over the full timeline (backgroundColor, not opacity, so it doesn't
+      // compound with the children's own opacity tweens below) so the two
+      // cross-dissolve together, finishing exactly as the hero fades out.
+      if (aboutIntro) {
+        var bgRgb = getComputedStyle(document.documentElement)
+          .getPropertyValue('--color-bg').trim().match(/[\d.]+/g);
+        gsap.set(aboutIntro, { backgroundColor: 'rgba(' + bgRgb.join(',') + ',0)' });
+        // duration matches the timeline's existing full span (see aboutPhoto
+        // below, which already spans "the whole timeline" at duration 0.5) -
+        // NOT 1, which would extend the timeline's total duration and
+        // squash every other tween's timing relative to scroll progress
+        tl.to(aboutIntro, { backgroundColor: 'rgb(' + bgRgb.join(',') + ')', ease: 'none', duration: 0.5 }, 0);
+      }
+
+      // Photo slides in from the left across the whole timeline; heading
+      // slides from the right and settles at the halfway point; body copy
+      // starts right where the heading finishes and settles alongside the
+      // photo at the end. xPercent (not a fixed px offset) scales with each
+      // element's own width, so the off-screen start clears the viewport at
+      // any width - .about-intro has overflow:hidden to contain it either way.
       if (aboutPhoto && aboutHeading && aboutBody) {
         gsap.set(aboutPhoto, { xPercent: -100, opacity: 0 });
         gsap.set(aboutHeading, { xPercent: 100, opacity: 0 });

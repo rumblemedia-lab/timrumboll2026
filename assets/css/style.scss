@@ -108,7 +108,43 @@ body.has-hero-header .site-header { transform: translateY(-100%); opacity: 0; po
 body.has-hero-header .site-header.is-visible { transform: translateY(0); opacity: 1; pointer-events: auto; }
 body:not(.has-hero-header) main { padding-top: calc(var(--header-h) + 12px); }
 
-/* Hero -------------------------------------------------------------------- */
+/* Hero + About stack -------------------------------------------------------
+   .hero-about-stack wraps both sections. By default they just stack
+   normally (no JS/reduced-motion: hero, then About, like any two
+   sections). Once main.js confirms GSAP is driving the scroll effect,
+   it adds .is-stacked, which is what actually turns this into the
+   overlapping pin: both children become position:absolute; inset:0
+   inside the wrapper, and ScrollTrigger pins the wrapper itself so they
+   stay glued to the viewport together while About's content animates in
+   over the receding hero. Gating it behind JS keeps the fallback path
+   safe - without it, About (opaque, higher z-index) would permanently
+   cover the hero with no way to reach it. */
+.hero-about-stack {
+  position: relative;
+}
+.hero-about-stack.is-stacked {
+  height: 100svh;
+  /* forces its own stacking context so it reliably paints above Showreels
+     (and anything else scrolling underneath) while pinned/fixed, regardless
+     of z-index:auto stacking ambiguity */
+  z-index: 5;
+  /* ScrollTrigger's pin reserves a spacer sized to the wrapper's own
+     height PLUS the pin's scroll distance (one viewport height each) -
+     without this, Showreels would sit pushed down by an extra viewport
+     height of empty space once the pin releases. */
+  margin-bottom: -100svh;
+  /* the wrapper is position:fixed for the whole pin - while .about-intro's
+     own background is mid-fade (semi-transparent), there'd be nothing
+     opaque blocking the view of whatever's scrolling underneath (Showreels)
+     without this, so it would visibly show through */
+  background: var(--color-bg);
+}
+.hero-about-stack.is-stacked .hero,
+.hero-about-stack.is-stacked .about-intro {
+  position: absolute;
+  inset: 0;
+}
+
 .hero {
   --hero-font-size: clamp(2.8rem, 6vw, 4.25rem);
   --play-btn-size: 56px;
@@ -121,9 +157,11 @@ body:not(.has-hero-header) main { padding-top: calc(var(--header-h) + 12px); }
   justify-content: center;
   overflow: hidden;
   padding: 6rem 1.5rem;
-  /* perspective must sit on .hero (the pinned element), not an ancestor -
+  /* perspective must sit here, not on an ancestor of the pinned wrapper -
      perspective/transform/filter on an ancestor of a position:fixed
-     element makes that ancestor its containing block, breaking the pin */
+     element makes that ancestor its containing block, breaking the pin.
+     .hero itself is just an absolutely-positioned child of the pinned
+     wrapper now, so this is safe. */
   perspective: 1200px;
 }
 .hero-shrink {
@@ -388,18 +426,15 @@ body.is-loaded .play-icon-triangle { opacity: 1; transform: scale(1); }
   // clips the photo/heading/body copy's off-screen slide-in starting
   // position (see main.js) so it can't introduce horizontal scroll
   overflow: hidden;
-  // .hero's ScrollTrigger pin reserves a spacer sized to its own height
-  // PLUS the pin's scroll distance (one viewport height each), so without
-  // this, .about-intro's entrance would finish entirely off-screen before
-  // ever scrolling into view. Pulling it up by one viewport height lines
-  // its reveal up with the hero's pinned 0->1 progress instead.
-  margin-top: -100svh;
+  display: flex;
+  align-items: center;
 }
 .about-intro-grid {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 2rem;
+  width: 100%;
 }
 .about-intro-photo {
   width: 260px;

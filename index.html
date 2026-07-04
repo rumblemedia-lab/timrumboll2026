@@ -2,67 +2,69 @@
 layout: default
 title: Home
 ---
-<section class="hero" id="hero">
-  <div class="hero-shrink">
-    <div class="hero-center">
-      <h1 class="hero-name reveal-lines">
-        <span class="line">Tim</span>
-        <span class="line">Rumboll</span>
-      </h1>
+<div class="hero-about-stack">
+  <section class="hero" id="hero">
+    <div class="hero-shrink">
+      <div class="hero-center">
+        <h1 class="hero-name reveal-lines">
+          <span class="line">Tim</span>
+          <span class="line">Rumboll</span>
+        </h1>
 
-      <div class="reel-trigger" id="reelTrigger">
-        <button class="play-btn" id="playBtn" type="button" aria-label="Listen to showreel" aria-expanded="false">
-          <svg class="play-icon" viewBox="0 0 64 64" aria-hidden="true">
-            <circle class="play-icon-ring" cx="32" cy="32" r="29" fill="none"
-              stroke="currentColor" stroke-width="2" pathLength="100"/>
-            <polygon class="play-icon-triangle" points="26,20 46,32 26,44"
-              fill="currentColor"/>
-            <g class="play-icon-pause">
-              <rect x="24" y="20" width="6" height="24" fill="currentColor"/>
-              <rect x="34" y="20" width="6" height="24" fill="currentColor"/>
-            </g>
-          </svg>
-        </button>
-        <div class="reel-caption">
-          <span class="reel-label">listen</span>
-          <div class="reel-player">
-            <audio id="reelAudio" preload="none" src="{{ '/assets/audio/main-showreel.mp3' | relative_url }}"></audio>
-            <div class="reel-progress"><div class="reel-progress-fill" id="reelProgressFill"></div></div>
+        <div class="reel-trigger" id="reelTrigger">
+          <button class="play-btn" id="playBtn" type="button" aria-label="Listen to showreel" aria-expanded="false">
+            <svg class="play-icon" viewBox="0 0 64 64" aria-hidden="true">
+              <circle class="play-icon-ring" cx="32" cy="32" r="29" fill="none"
+                stroke="currentColor" stroke-width="2" pathLength="100"/>
+              <polygon class="play-icon-triangle" points="26,20 46,32 26,44"
+                fill="currentColor"/>
+              <g class="play-icon-pause">
+                <rect x="24" y="20" width="6" height="24" fill="currentColor"/>
+                <rect x="34" y="20" width="6" height="24" fill="currentColor"/>
+              </g>
+            </svg>
+          </button>
+          <div class="reel-caption">
+            <span class="reel-label">listen</span>
+            <div class="reel-player">
+              <audio id="reelAudio" preload="none" src="{{ '/assets/audio/main-showreel.mp3' | relative_url }}"></audio>
+              <div class="reel-progress"><div class="reel-progress-fill" id="reelProgressFill"></div></div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <h2 class="hero-tagline reveal-lines">
-        <span class="line">Northern</span>
-        <span class="line">Male</span>
-        <span class="line hero-scramble-line"><span id="heroScramble" class="hero-scramble">Advertising</span></span>
-        <span class="line">Voice Over</span>
-        <span class="line">Artist</span>
-      </h2>
-    </div>
-  </div>
-
-  <a class="hero-aside hero-aside-right" href="#contact">get in touch</a>
-  <a class="hero-aside hero-aside-left" href="#showreels">hear more</a>
-</section>
-
-<section class="section about-intro" id="about">
-  <div class="wrap about-intro-grid">
-    <img class="about-intro-photo" src="{{ '/assets/images/tim-portrait.jpg' | relative_url }}" alt="Tim Rumboll">
-    <div class="about-intro-copy">
-      <div class="about-intro-heading">
-        <p class="eyebrow">About Tim</p>
-        <h2>Sheffield-based, remote-ready</h2>
-      </div>
-      <div class="about-intro-body">
-        <p>Tim has been voicing professional work since 2008, and full-time since 2012 &mdash; mostly commercials, promos and explainer videos, alongside corporate narration, e-learning and documentary work.</p>
-        <p>He records from a treated home studio in Sheffield, with Source Connect Now available for live-directed sessions, or a fast self-produced turnaround for briefs that don't need a director on the line.</p>
-        <p>Natural Yorkshire tones, or neutral and broad on request &mdash; whichever the brief calls for.</p>
-        <a class="btn btn-ghost" href="{{ '/about/' | relative_url }}">More about Tim &rarr;</a>
+        <h2 class="hero-tagline reveal-lines">
+          <span class="line">Northern</span>
+          <span class="line">Male</span>
+          <span class="line hero-scramble-line"><span id="heroScramble" class="hero-scramble">Advertising</span></span>
+          <span class="line">Voice Over</span>
+          <span class="line">Artist</span>
+        </h2>
       </div>
     </div>
-  </div>
-</section>
+
+    <a class="hero-aside hero-aside-right" href="#contact">get in touch</a>
+    <a class="hero-aside hero-aside-left" href="#showreels">hear more</a>
+  </section>
+
+  <section class="section about-intro" id="about">
+    <div class="wrap about-intro-grid">
+      <img class="about-intro-photo" src="{{ '/assets/images/tim-portrait.jpg' | relative_url }}" alt="Tim Rumboll">
+      <div class="about-intro-copy">
+        <div class="about-intro-heading">
+          <p class="eyebrow">About Tim</p>
+          <h2>Sheffield-based, remote-ready</h2>
+        </div>
+        <div class="about-intro-body">
+          <p>Tim has been voicing professional work since 2008, and full-time since 2012 &mdash; mostly commercials, promos and explainer videos, alongside corporate narration, e-learning and documentary work.</p>
+          <p>He records from a treated home studio in Sheffield, with Source Connect Now available for live-directed sessions, or a fast self-produced turnaround for briefs that don't need a director on the line.</p>
+          <p>Natural Yorkshire tones, or neutral and broad on request &mdash; whichever the brief calls for.</p>
+          <a class="btn btn-ghost" href="{{ '/about/' | relative_url }}">More about Tim &rarr;</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
 
 <section class="section" id="showreels">
   <div class="wrap">
