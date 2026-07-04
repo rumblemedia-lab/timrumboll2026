@@ -132,19 +132,48 @@ document.addEventListener('DOMContentLoaded', function () {
     var heroShrink = hero.querySelector('.hero-shrink');
     if (!heroShrink) { initHeaderRevealFallback(); return; }
 
+    var asideLeft = hero.querySelector('.hero-aside-left');
+    var asideRight = hero.querySelector('.hero-aside-right');
+
+    // The aside links play their own CSS entrance fade/slide-in on load.
+    // GSAP force-renders a tween's start state the moment it's created, so
+    // handing an element to GSAP before that entrance has finished would
+    // freeze it at its pre-entrance (invisible) state instead. Wait for the
+    // entrance's transitionend before ever giving GSAP control of it - once
+    // this fires, also switch off the CSS transition (it would otherwise
+    // fight the scrub's own per-frame inline styles, making it lag instead
+    // of tracking scroll 1:1); hover keeps its own short fade.
+    var entranceSettled = false;
+    var onSettled = [];
+    function whenEntranceSettled(fn) {
+      if (entranceSettled) { fn(); } else { onSettled.push(fn); }
+    }
+    var entranceWatchEl = asideLeft || asideRight;
+    if (entranceWatchEl) {
+      // .hero-aside's transition list declares 'opacity' twice; the browser
+      // resolves the property to the later (shorter, undelayed) entry, so
+      // opacity's transitionend fires well before 'transform' has even
+      // started its own longer, delayed one - watch 'transform' specifically.
+      entranceWatchEl.addEventListener('transitionend', function onEntranceEnd(e) {
+        if (e.propertyName !== 'transform') return;
+        entranceWatchEl.removeEventListener('transitionend', onEntranceEnd);
+        entranceSettled = true;
+        onSettled.forEach(function (fn) { fn(); });
+        onSettled = [];
+      });
+    } else {
+      entranceSettled = true;
+    }
+
     var mm = gsap.matchMedia();
     mm.add({
       isMobile: '(max-width: 760px)',
       isDesktop: '(min-width: 761px)'
     }, function (context) {
       // mobile drops translateZ (scale + fade only) - 3D compositing is costlier there
-      var z = context.conditions.isMobile ? 0 : -650;
+      var isMobile = context.conditions.isMobile;
 
-      gsap.to(heroShrink, {
-        scale: 0.7,
-        z: z,
-        opacity: 0,
-        ease: 'none',
+      var tl = gsap.timeline({
         scrollTrigger: {
           trigger: hero,
           start: 'top top',
@@ -155,6 +184,22 @@ document.addEventListener('DOMContentLoaded', function () {
             header.classList.toggle('is-visible', self.progress >= 0.92);
           }
         }
+      });
+
+      // Same scroll range as the hero content, but each element recedes to
+      // its own z-depth so the three read as separate parallax layers.
+      tl.to(heroShrink, { scale: 0.7, z: isMobile ? 0 : -650, opacity: 0, ease: 'none' }, 0);
+
+      whenEntranceSettled(function () {
+        if (asideLeft) {
+          tl.to(asideLeft, { z: isMobile ? 0 : -300, opacity: 0, ease: 'none' }, 0);
+          asideLeft.classList.add('is-parallaxing');
+        }
+        if (asideRight) {
+          tl.to(asideRight, { z: isMobile ? 0 : -900, opacity: 0, ease: 'none' }, 0);
+          asideRight.classList.add('is-parallaxing');
+        }
+        tl.progress(tl.progress()); // re-render at current scroll position now the tweens exist
       });
     });
   }

@@ -195,6 +195,12 @@ body.is-loaded .reveal-lines .line { opacity: 1; transform: translateY(0); }
 body.is-loaded .hero-aside { opacity: 1; transform: translateY(0); }
 .hero-aside:hover { opacity: 0.6 !important; }
 
+/* Once the entrance fade-in finishes, main.js adds this so the scroll-
+   scrubbed parallax (transform/opacity set every frame) isn't fighting
+   the transition above - hover keeps its own short fade. */
+.hero-aside.is-parallaxing { transition: none; }
+.hero-aside.is-parallaxing:hover { transition: opacity 0.2s ease; }
+
 @media (min-width: 761px) {
   .hero-aside-left { position: absolute; left: 15%; top: 70%; }
   .hero-aside-right { position: absolute; right: 15%; top: 34%; }
