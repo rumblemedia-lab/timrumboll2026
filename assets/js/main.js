@@ -102,18 +102,63 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   /* ---------------------------------------------------------------------
-     Header: hidden over the hero, fades in once you scroll past it
+     Hero scroll-shrink: pins the hero while it scales/pushes back in
+     z-space/fades, scrubbed to scroll. Header reveal is now driven by
+     this ScrollTrigger's progress rather than IntersectionObserver,
+     since that doesn't fire correctly against a pinned element.
      ------------------------------------------------------------------- */
   var header = document.querySelector('.site-header');
   var hero = document.getElementById('hero');
-  if (header && hero && 'IntersectionObserver' in window) {
-    var headerIo = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        header.classList.toggle('is-visible', !entry.isIntersecting);
-      });
-    }, { threshold: 0, rootMargin: '-85% 0px 0px 0px' });
-    headerIo.observe(hero);
+
+  function initHeaderRevealFallback() {
+    if (header && hero && 'IntersectionObserver' in window) {
+      var headerIo = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          header.classList.toggle('is-visible', !entry.isIntersecting);
+        });
+      }, { threshold: 0, rootMargin: '-85% 0px 0px 0px' });
+      headerIo.observe(hero);
+    }
   }
+
+  function initHeroShrink() {
+    if (!header || !hero) return;
+
+    if (prefersReducedMotion || !hasGsap) {
+      initHeaderRevealFallback();
+      return;
+    }
+
+    var heroShrink = hero.querySelector('.hero-shrink');
+    if (!heroShrink) { initHeaderRevealFallback(); return; }
+
+    var mm = gsap.matchMedia();
+    mm.add({
+      isMobile: '(max-width: 760px)',
+      isDesktop: '(min-width: 761px)'
+    }, function (context) {
+      // mobile drops translateZ (scale + fade only) - 3D compositing is costlier there
+      var z = context.conditions.isMobile ? 0 : -650;
+
+      gsap.to(heroShrink, {
+        scale: 0.7,
+        z: z,
+        opacity: 0,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: hero,
+          start: 'top top',
+          end: '+=100%',
+          scrub: true,
+          pin: true,
+          onUpdate: function (self) {
+            header.classList.toggle('is-visible', self.progress >= 0.92);
+          }
+        }
+      });
+    });
+  }
+  initHeroShrink();
 
   /* ---------------------------------------------------------------------
      Showreel play button -> expands into an audio player

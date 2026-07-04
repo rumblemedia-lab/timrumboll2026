@@ -114,12 +114,20 @@ body:not(.has-hero-header) main { padding-top: calc(var(--header-h) + 12px); }
   --play-btn-size: 56px;
   --reel-gap: 1.1rem;
   position: relative;
+  z-index: 1;
   min-height: 100svh;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   padding: 6rem 1.5rem;
+  /* perspective must sit on .hero (the pinned element), not an ancestor -
+     perspective/transform/filter on an ancestor of a position:fixed
+     element makes that ancestor its containing block, breaking the pin */
+  perspective: 1200px;
+}
+.hero-shrink {
+  will-change: transform, opacity;
 }
 .hero-center {
   display: flex;
@@ -365,6 +373,30 @@ body.is-loaded .play-icon-triangle { opacity: 1; transform: scale(1); }
 .section { padding: 4.5rem 0; border-bottom: 1px solid var(--color-hairline); }
 .section-head { margin-bottom: 2.25rem; max-width: 46ch; }
 .section-head p { color: var(--color-text-muted); margin: 0.5rem 0 0; }
+
+/* About Me (homepage) ------------------------------------------------------ */
+.about-intro {
+  position: relative;
+  z-index: 2;
+  background: var(--color-bg);
+}
+.about-intro-grid {
+  display: flex;
+  align-items: center;
+  gap: 3rem;
+  flex-wrap: wrap;
+}
+.about-intro-photo {
+  width: 260px;
+  height: 260px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: var(--color-surface);
+  flex-shrink: 0;
+}
+.about-intro-copy { flex: 1 1 340px; }
+.about-intro-copy h2 { margin-bottom: 1rem; }
+.about-intro-copy p { color: var(--color-text-muted); margin: 0 0 1rem; }
 
 /* Showreel cards ----------------------------------------------------------- */
 .reel-grid {
