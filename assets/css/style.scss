@@ -188,7 +188,7 @@ body.is-loaded .hero-aside { opacity: 1; transform: translateY(0); }
 .hero-aside:hover { opacity: 0.6 !important; }
 
 @media (min-width: 761px) {
-  .hero-aside-left { position: absolute; left: 15%; top: 66%; }
+  .hero-aside-left { position: absolute; left: 15%; top: 70%; }
   .hero-aside-right { position: absolute; right: 15%; top: 34%; }
 }
 @media (max-width: 760px) {
