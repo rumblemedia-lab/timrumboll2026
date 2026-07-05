@@ -1,7 +1,10 @@
 <header class="site-header">
   <div class="wrap">
     <a class="logo" href="{{ '/' | relative_url }}">Tim Rumboll</a>
-    <nav>
+    <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">
+      <span class="nav-toggle-icon" aria-hidden="true"></span>
+    </button>
+    <nav class="site-nav" id="site-nav">
       <a href="{{ '/' | relative_url }}#showreels">Showreels</a>
       <a href="{{ '/projects/' | relative_url }}">Projects</a>
       <a href="{{ '/notes/' | relative_url }}">Notes</a>

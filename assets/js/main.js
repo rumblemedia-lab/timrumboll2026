@@ -3,6 +3,61 @@ document.addEventListener('DOMContentLoaded', function () {
   var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* ---------------------------------------------------------------------
+     Nav toggle (hamburger) - plain vanilla JS, not gated behind GSAP/
+     reduced-motion like the animations below: it's site-wide (every page
+     has a header) and its open/close states are functional, not just
+     decorative, so it needs to work identically regardless of motion
+     preference or whether GSAP loaded. Reduced-motion only removes the
+     CSS transition (see style.scss), not this logic.
+     ------------------------------------------------------------------- */
+  (function initNavToggle() {
+    var siteHeader = document.querySelector('.site-header');
+    var navToggle = document.querySelector('.nav-toggle');
+    var siteNav = document.getElementById('site-nav');
+    if (!siteHeader || !navToggle || !siteNav) return;
+
+    function closeNav() {
+      siteHeader.classList.remove('nav-open');
+      navToggle.setAttribute('aria-expanded', 'false');
+      navToggle.setAttribute('aria-label', 'Open menu');
+    }
+
+    function openNav() {
+      siteHeader.classList.add('nav-open');
+      navToggle.setAttribute('aria-expanded', 'true');
+      navToggle.setAttribute('aria-label', 'Close menu');
+    }
+
+    navToggle.addEventListener('click', function () {
+      if (siteHeader.classList.contains('nav-open')) {
+        closeNav();
+      } else {
+        openNav();
+      }
+    });
+
+    siteNav.querySelectorAll('a').forEach(function (a) {
+      a.addEventListener('click', closeNav);
+    });
+
+    // Close on outside click/tap - anything within the header (the toggle
+    // itself, or the open panel) is left alone so this doesn't fight with
+    // the toggle's own click handler above.
+    document.addEventListener('click', function (e) {
+      if (!siteHeader.classList.contains('nav-open')) return;
+      if (siteHeader.contains(e.target)) return;
+      closeNav();
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && siteHeader.classList.contains('nav-open')) {
+        closeNav();
+        navToggle.focus();
+      }
+    });
+  })();
+
+  /* ---------------------------------------------------------------------
      GSAP: register plugins used elsewhere in this file. ScrollTrigger
      isn't driving anything yet (that lands in a later round) - this just
      gets the plumbing (and its Lenis sync, below) in place.

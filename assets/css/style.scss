@@ -79,6 +79,7 @@ h3 { font-size: 1.15rem; font-weight: 700; }
   transition: transform 0.5s var(--ease-out-expo), opacity 0.4s ease;
 }
 .site-header .wrap {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -90,8 +91,68 @@ h3 { font-size: 1.15rem; font-weight: 700; }
   font-size: 1.15rem;
   text-decoration: none;
 }
-.site-header nav { display: flex; gap: 1.75rem; }
-.site-header nav a {
+
+/* Nav toggle (hamburger) - same on both breakpoints, opens .site-nav below */
+.nav-toggle {
+  position: relative;
+  width: 26px;
+  height: 18px;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.nav-toggle-icon,
+.nav-toggle-icon::before,
+.nav-toggle-icon::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--color-text);
+  transition: transform 0.25s var(--ease-out-expo), opacity 0.2s ease;
+}
+.nav-toggle-icon { top: 50%; transform: translateY(-50%); }
+.nav-toggle-icon::before { top: -7px; }
+.nav-toggle-icon::after { top: 7px; }
+/* Open state morphs the 3 lines into an X - middle line fades out, the
+   other two rotate in place to cross over */
+.site-header.nav-open .nav-toggle-icon { background: transparent; }
+.site-header.nav-open .nav-toggle-icon::before { top: 0; transform: rotate(45deg); }
+.site-header.nav-open .nav-toggle-icon::after { top: 0; transform: rotate(-45deg); }
+
+/* Nav dropdown panel - anchored under the toggle, right-aligned within
+   .wrap (which is what's given position:relative above, not .site-header
+   itself, so it lines up with the header's own content width/padding
+   rather than the full viewport edge) */
+.site-nav {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  min-width: 170px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-hairline);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+  transition: opacity 0.25s var(--ease-out-expo), transform 0.25s var(--ease-out-expo);
+}
+.site-header.nav-open .site-nav {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.site-nav a {
   font-family: var(--font-accent);
   font-style: italic;
   font-weight: 500;
@@ -100,8 +161,8 @@ h3 { font-size: 1.15rem; font-weight: 700; }
   color: var(--color-text-muted);
   transition: color 0.15s ease;
 }
-.site-header nav a:hover,
-.site-header nav a.active { color: var(--color-text); }
+.site-nav a:hover,
+.site-nav a.active { color: var(--color-text); }
 
 /* Hero header stays hidden until the person scrolls past it */
 body.has-hero-header .site-header { transform: translateY(-100%); opacity: 0; pointer-events: none; }
@@ -458,6 +519,13 @@ body.is-loaded .play-icon-triangle { opacity: 1; transform: scale(1); }
   .reel-label, .reel-player {
     transition: none !important;
   }
+  /* Same idea for the nav menu: it still has two valid states (open/closed,
+     gated by .nav-open), just no animated hand-off between them - open/close
+     is instant. */
+  .nav-toggle-icon, .nav-toggle-icon::before, .nav-toggle-icon::after,
+  .site-nav {
+    transition: none !important;
+  }
 }
 
 /* Sections ---------------------------------------------------------------- */
@@ -634,7 +702,6 @@ audio { width: 100%; height: 34px; filter: sepia(0.15) saturate(0.6); }
 /* Responsive ------------------------------------------------------------------ */
 @media (max-width: 760px) {
   .project-row { grid-template-columns: 1fr; row-gap: 0.35rem; }
-  .site-header nav { gap: 1.1rem; }
 }
 
 /* Focus visibility -------------------------------------------------------------- */
