@@ -226,14 +226,21 @@ document.addEventListener('DOMContentLoaded', function () {
       // for its own sequence (0.375 to 0.875) that its combined sequence
       // used previously, so it isn't rushed relative to before. A further
       // HOLD units of nothing-scheduled time is appended after that as the
-      // static hold - mobile's is half of desktop's (0.1 vs 0.2 units,
-      // i.e. 0.2 vs 0.4 viewports), per this round. Grand total is
-      // therefore 0.975 units (195%) on mobile, 1.075 units (215%) on
-      // desktop - end is derived from it (units * 2 viewports/unit * 100%).
+      // static hold - mobile's is half of desktop's (0.05 vs 0.1 units,
+      // i.e. 0.1 vs 0.2 viewports, each halved again this round from the
+      // previous round's 0.1/0.2). Grand total is therefore 0.925 units
+      // (185%) on mobile, 0.975 units (195%) on desktop - end is derived
+      // from it (units * 2 viewports/unit * 100%).
       var ABOUT_START = 0.375;
       var ABOUT_MID = 0.625;
       var ABOUT_END = 0.875;
-      var HOLD = isMobile ? 0.1 : 0.2;
+      // Body copy now starts once the heading's own tween (ABOUT_START to
+      // ABOUT_MID) is halfway done, overlapping with its second half,
+      // rather than waiting for the heading to fully finish - its end
+      // point is unchanged (still ABOUT_END), so this only stretches out
+      // (slows down) body's own reveal, which is fine.
+      var BODY_START = ABOUT_START + 0.5 * (ABOUT_MID - ABOUT_START);
+      var HOLD = isMobile ? 0.05 : 0.1;
       var GRAND_END = ABOUT_END + HOLD;
       // Reveal the header a short way into the hold (20% of it) rather than
       // at a fixed fraction of the grand total - GRAND_END now differs by
@@ -272,11 +279,14 @@ document.addEventListener('DOMContentLoaded', function () {
         tl.to(aboutIntro, { backgroundColor: 'rgb(' + bgRgb.join(',') + ')', ease: 'none', duration: ABOUT_END - ABOUT_START }, ABOUT_START);
       }
 
-      // Photo and heading now animate together and finish together at
-      // About's own midpoint; body copy starts there and runs to About's
-      // own completion. xPercent (not a fixed px offset) scales with each
-      // element's own width, so the off-screen start clears the viewport at
-      // any width - .about-intro has overflow:hidden to contain it either way.
+      // Photo and heading animate together and finish together at About's
+      // own midpoint. Body copy now starts at BODY_START (halfway through
+      // the heading's own tween, see above) and runs to About's own
+      // completion - overlapping with the heading's second half rather
+      // than waiting for it to finish. xPercent (not a fixed px offset)
+      // scales with each element's own width, so the off-screen start
+      // clears the viewport at any width - .about-intro has
+      // overflow:hidden to contain it either way.
       if (aboutPhoto && aboutHeading && aboutBody) {
         gsap.set(aboutPhoto, { xPercent: -100, opacity: 0 });
         gsap.set(aboutHeading, { xPercent: 100, opacity: 0 });
@@ -284,7 +294,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         tl.to(aboutPhoto, { xPercent: 0, opacity: 1, ease: 'none', duration: ABOUT_MID - ABOUT_START }, ABOUT_START);
         tl.to(aboutHeading, { xPercent: 0, opacity: 1, ease: 'none', duration: ABOUT_MID - ABOUT_START }, ABOUT_START);
-        tl.to(aboutBody, { xPercent: 0, opacity: 1, ease: 'none', duration: ABOUT_END - ABOUT_MID }, ABOUT_MID);
+        tl.to(aboutBody, { xPercent: 0, opacity: 1, ease: 'none', duration: ABOUT_END - BODY_START }, BODY_START);
       }
 
       // Nothing is scheduled from ABOUT_END to GRAND_END - GSAP otherwise
