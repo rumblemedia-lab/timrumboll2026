@@ -149,6 +149,27 @@ document.addEventListener('DOMContentLoaded', function () {
     var aboutHeading = document.querySelector('.about-intro-heading');
     var aboutBody = document.querySelector('.about-intro-body');
 
+    // On mobile at generous spacing, the stacked content (photo above
+    // heading/body) can be genuinely taller than one viewport - it's fine
+    // for the excess to sit below the fold during the pin (simply not
+    // rendered within the fixed viewport), as long as it's reachable by
+    // continued scroll afterward. scrollHeight reveals the true content
+    // height even though .about-intro is currently constrained via
+    // inset:0, so the wrapper (and its pin-spacing compensation, which
+    // depends only on pin distance, not this height) can be sized to
+    // match from the very start - this has to be decided up front, not
+    // adjusted mid-pin: GSAP locks the pinned trigger's own box (via an
+    // inline height/max-height, restored via a transform once released)
+    // for its whole lifecycle, and doesn't gracefully accommodate a
+    // child growing later. Desktop's content already fits, so this is a
+    // no-op there (natural height <= viewport height).
+    if (aboutIntro) {
+      var naturalHeight = aboutIntro.scrollHeight;
+      if (naturalHeight > window.innerHeight) {
+        heroAboutStack.style.setProperty('--about-content-height', naturalHeight + 'px');
+      }
+    }
+
     // The aside links play their own CSS entrance fade/slide-in on load.
     // GSAP force-renders a tween's start state the moment it's created, so
     // handing an element to GSAP before that entrance has finished would
@@ -204,24 +225,31 @@ document.addEventListener('DOMContentLoaded', function () {
       // About's start), and reuses the same "0.5 units = 1 viewport" pace
       // for its own sequence (0.375 to 0.875) that its combined sequence
       // used previously, so it isn't rushed relative to before. A further
-      // 0.2 units (0.4 viewports, ~19% of the new grand total) of nothing-
-      // scheduled time is appended after that as the static hold, per
-      // point 4. Grand total = 0.875 + 0.2 = 1.075 units = 2.15 viewports
-      // of scroll = 215%.
+      // HOLD units of nothing-scheduled time is appended after that as the
+      // static hold - mobile's is half of desktop's (0.1 vs 0.2 units,
+      // i.e. 0.2 vs 0.4 viewports), per this round. Grand total is
+      // therefore 0.975 units (195%) on mobile, 1.075 units (215%) on
+      // desktop - end is derived from it (units * 2 viewports/unit * 100%).
       var ABOUT_START = 0.375;
       var ABOUT_MID = 0.625;
       var ABOUT_END = 0.875;
-      var GRAND_END = 1.075;
+      var HOLD = isMobile ? 0.1 : 0.2;
+      var GRAND_END = ABOUT_END + HOLD;
+      // Reveal the header a short way into the hold (20% of it) rather than
+      // at a fixed fraction of the grand total - GRAND_END now differs by
+      // breakpoint, so a hardcoded fraction calibrated for one would fire
+      // at the wrong point (even before About settles) on the other.
+      var HEADER_REVEAL = (ABOUT_END + HOLD * 0.2) / GRAND_END;
 
       var tl = gsap.timeline({
         scrollTrigger: {
           trigger: heroAboutStack,
           start: 'top top',
-          end: '+=215%',
+          end: '+=' + (GRAND_END * 200) + '%',
           scrub: true,
           pin: true,
           onUpdate: function (self) {
-            header.classList.toggle('is-visible', self.progress >= 0.85);
+            header.classList.toggle('is-visible', self.progress >= HEADER_REVEAL);
           }
         }
       });

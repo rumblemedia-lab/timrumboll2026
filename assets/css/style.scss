@@ -123,21 +123,45 @@ body:not(.has-hero-header) main { padding-top: calc(var(--header-h) + 12px); }
   position: relative;
 }
 .hero-about-stack.is-stacked {
-  height: 100svh;
+  /* On mobile at generous spacing, About's stacked content can be taller
+     than one viewport - main.js measures that and sets
+     --about-content-height when it's actually needed, so the wrapper
+     (and everything derived from its height) is sized correctly from the
+     very start. GSAP locks the pinned trigger's own box for its whole
+     lifecycle (an inline height/max-height, restored via a transform once
+     released) and doesn't gracefully accommodate it changing size
+     mid-pin, so this can't be decided later - it's a no-op on desktop,
+     where content already fits (the custom property is never set there).
+     !important: GSAP ALSO sets its own inline height/max-height (matching
+     whatever it measures at setup) - without this, that inline style
+     would win regardless of what this rule computes to, but since GSAP
+     reads the *computed* style when first measuring the trigger, forcing
+     the computed height to be correct here means GSAP captures (and then
+     locks in) the right, taller value from the very start instead. */
+  /* String interpolation forces this through as a literal string - Sass has
+     its own max() function for compile-time math on plain numbers, and
+     tries (and fails) to evaluate var(...) as one rather than passing a
+     CSS-native max() through to the browser untouched. */
+  height: #{"max(100svh, var(--about-content-height, 0px))"} !important;
   /* forces its own stacking context so it reliably paints above Showreels
      (and anything else scrolling underneath) while pinned/fixed, regardless
      of z-index:auto stacking ambiguity */
   z-index: 5;
-  /* ScrollTrigger's pin reserves a spacer sized to the wrapper's own
-     CSS height PLUS the pin's scroll distance - and GSAP moves this
-     margin onto that spacer, not the wrapper itself, so the correct
-     compensation is -[pin distance] (matching the ScrollTrigger `end`
-     percentage below), NOT -[wrapper height]: the wrapper's own height
-     cancels out of that sum algebraically, regardless of what it is
-     (100svh desktop, 140svh mobile - see below). Without this,
-     Showreels would sit pushed down by the leftover, uncompensated
-     scroll distance once the pin releases. */
-  margin-bottom: -215svh;
+  /* No margin-bottom compensation here (an earlier attempt at one was
+     removed - see commit history): once the pin releases, GSAP leaves the
+     trigger in normal flow at position:relative but shifts it down via a
+     persistent transform so its visual box ends exactly at the bottom of
+     the pin-spacer (spacer height = trigger height + pin distance, and the
+     transform offsets by the pin distance) - Showreels, as the next
+     sibling after the spacer, therefore already lines up flush against the
+     trigger's real post-release position with zero gap or overlap by
+     default. A -[pin distance] margin-bottom was tried here previously to
+     "cancel out" the spacer's reserved scroll distance, but that pulls
+     Showreels up to sit flush with the trigger's own CSS height instead -
+     which is short of where the transform actually renders it, so it
+     opened up a same-sized document-space overlap where Showreels'
+     top portion sat permanently hidden behind the still-opaque,
+     higher-z-index trigger. */
   /* the wrapper is position:fixed for the whole pin - while .about-intro's
      own background is mid-fade (semi-transparent), there'd be nothing
      opaque blocking the view of whatever's scrolling underneath (Showreels)
@@ -149,13 +173,12 @@ body:not(.has-hero-header) main { padding-top: calc(var(--header-h) + 12px); }
   position: absolute;
   inset: 0;
 }
-/* NOTE: making the wrapper taller than the viewport was tried and reverted
-   here - during the pin the wrapper is position:fixed with no internal
-   scroll, so only one viewport-height's worth of a taller box is ever
-   visible at once; that just moved the clipping from the photo's top to
-   the CTA button/last paragraph at the bottom, still invisible throughout
-   the whole pin. The actual fix (below, on .about-intro/-photo/-grid) is
-   to shrink the stacked content enough to genuinely fit one viewport. */
+/* On mobile, if the wrapper is now taller than the viewport (per the
+   custom property above), it's still position:fixed with no internal
+   scroll while pinned - so anything past the bottom of the viewport is
+   simply not rendered on screen during the pin (fine, per this round),
+   reachable normally via continued scroll once the pin/hold ends and it
+   un-pins back into ordinary document flow at its full height. */
 
 .hero {
   --hero-font-size: clamp(2.8rem, 6vw, 4.25rem);
@@ -461,17 +484,25 @@ body.is-loaded .play-icon-triangle { opacity: 1; transform: scale(1); }
 .about-intro-copy p { color: var(--color-text-muted); margin: 0 0 1rem; }
 
 @media (max-width: 760px) {
-  /* Stacked content (photo above heading/body) is genuinely taller than
-     one viewport at .section's normal padding/gap/photo size - and since
-     .about-intro is position:fixed for the whole pin with no internal
-     scroll, anything taller than one viewport-height is invisible for the
-     entire pin (only ever a one-viewport "window" onto it is shown), not
-     just clipped at an edge. Shrink the footprint enough to genuinely fit. */
-  .about-intro { padding: 0.75rem 0; }
-  .about-intro-grid { gap: 0.75rem; }
-  .about-intro-photo { width: 140px; height: 140px; }
-  .about-intro-copy h2 { margin-bottom: 0.5rem; }
-  .about-intro-copy p { margin-bottom: 0.5rem; }
+  /* Last round shrank all of this to force the stacked content to fit
+     within one fixed viewport during the pin, since nothing below the
+     fold was reachable. That constraint is gone: it's now fine for body
+     copy to run past the bottom of the pinned viewport - it's reachable
+     by continued scroll once the pin/hold ends and normal flow resumes.
+     So: comfortable spacing again, and align-items:flex-start (not
+     center) so any overflow spills out the bottom, not split evenly
+     above and below the box (which would clip the photo's top again). */
+  .about-intro { align-items: flex-start; padding: 3rem 0; }
+  .about-intro-grid { gap: 1.5rem; }
+  .about-intro-photo {
+    /* matches the heading/body copy's own content width, rather than a
+       small fixed square or a full edge-to-edge bleed */
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+  }
+  .about-intro-copy h2 { margin-bottom: 1rem; }
+  .about-intro-copy p { margin-bottom: 1rem; }
 }
 
 @media (min-width: 761px) {
