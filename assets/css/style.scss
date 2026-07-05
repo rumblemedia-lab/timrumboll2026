@@ -173,6 +173,18 @@ body:not(.has-hero-header) main { padding-top: calc(var(--header-h) + 12px); }
   position: absolute;
   inset: 0;
 }
+/* .hero's own content (the shrinking name/tagline) is centered via flex
+   *within this box* - on mobile, where the wrapper can grow taller than
+   one viewport to fit About's content (see --about-content-height above),
+   inset:0 alone would stretch .hero to match that taller height too,
+   shifting its flex-centered content down and off the bottom of the
+   actual viewport. An explicit height pins .hero back to exactly one
+   viewport (top:0 from inset:0 above still anchors it) regardless of the
+   wrapper's own height, since .hero's content was never meant to need the
+   extra room - only .about-intro (which keeps plain inset:0, above) does. */
+.hero-about-stack.is-stacked .hero {
+  height: 100svh;
+}
 /* On mobile, if the wrapper is now taller than the viewport (per the
    custom property above), it's still position:fixed with no internal
    scroll while pinned - so anything past the bottom of the viewport is
