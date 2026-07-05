@@ -129,10 +129,15 @@ body:not(.has-hero-header) main { padding-top: calc(var(--header-h) + 12px); }
      of z-index:auto stacking ambiguity */
   z-index: 5;
   /* ScrollTrigger's pin reserves a spacer sized to the wrapper's own
-     height PLUS the pin's scroll distance (one viewport height each) -
-     without this, Showreels would sit pushed down by an extra viewport
-     height of empty space once the pin releases. */
-  margin-bottom: -100svh;
+     CSS height PLUS the pin's scroll distance - and GSAP moves this
+     margin onto that spacer, not the wrapper itself, so the correct
+     compensation is -[pin distance] (matching the ScrollTrigger `end`
+     percentage below), NOT -[wrapper height]: the wrapper's own height
+     cancels out of that sum algebraically, regardless of what it is
+     (100svh desktop, 140svh mobile - see below). Without this,
+     Showreels would sit pushed down by the leftover, uncompensated
+     scroll distance once the pin releases. */
+  margin-bottom: -215svh;
   /* the wrapper is position:fixed for the whole pin - while .about-intro's
      own background is mid-fade (semi-transparent), there'd be nothing
      opaque blocking the view of whatever's scrolling underneath (Showreels)
@@ -144,6 +149,13 @@ body:not(.has-hero-header) main { padding-top: calc(var(--header-h) + 12px); }
   position: absolute;
   inset: 0;
 }
+/* NOTE: making the wrapper taller than the viewport was tried and reverted
+   here - during the pin the wrapper is position:fixed with no internal
+   scroll, so only one viewport-height's worth of a taller box is ever
+   visible at once; that just moved the clipping from the photo's top to
+   the CTA button/last paragraph at the bottom, still invisible throughout
+   the whole pin. The actual fix (below, on .about-intro/-photo/-grid) is
+   to shrink the stacked content enough to genuinely fit one viewport. */
 
 .hero {
   --hero-font-size: clamp(2.8rem, 6vw, 4.25rem);
@@ -447,6 +459,20 @@ body.is-loaded .play-icon-triangle { opacity: 1; transform: scale(1); }
 .about-intro-copy { width: 100%; }
 .about-intro-copy h2 { margin-bottom: 1rem; }
 .about-intro-copy p { color: var(--color-text-muted); margin: 0 0 1rem; }
+
+@media (max-width: 760px) {
+  /* Stacked content (photo above heading/body) is genuinely taller than
+     one viewport at .section's normal padding/gap/photo size - and since
+     .about-intro is position:fixed for the whole pin with no internal
+     scroll, anything taller than one viewport-height is invisible for the
+     entire pin (only ever a one-viewport "window" onto it is shown), not
+     just clipped at an edge. Shrink the footprint enough to genuinely fit. */
+  .about-intro { padding: 0.75rem 0; }
+  .about-intro-grid { gap: 0.75rem; }
+  .about-intro-photo { width: 140px; height: 140px; }
+  .about-intro-copy h2 { margin-bottom: 0.5rem; }
+  .about-intro-copy p { margin-bottom: 0.5rem; }
+}
 
 @media (min-width: 761px) {
   .about-intro-grid {

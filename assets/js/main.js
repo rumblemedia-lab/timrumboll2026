@@ -195,45 +195,58 @@ document.addEventListener('DOMContentLoaded', function () {
       // mobile drops translateZ (scale + fade only) - 3D compositing is costlier there
       var isMobile = context.conditions.isMobile;
 
+      // Timing model (all values in the timeline's own "time" units, where
+      // the hero's own tween - untouched, 0 to 0.5 - fixes the scroll-
+      // distance-per-unit pace at 2 viewport-heights per unit, since it
+      // used to span the entire old pin (100% = 1 viewport) over exactly
+      // 0.5 units): About now starts at 0.375 (75% of the way through the
+      // hero's own 0->0.5 span, i.e. hero's final quarter overlaps with
+      // About's start), and reuses the same "0.5 units = 1 viewport" pace
+      // for its own sequence (0.375 to 0.875) that its combined sequence
+      // used previously, so it isn't rushed relative to before. A further
+      // 0.2 units (0.4 viewports, ~19% of the new grand total) of nothing-
+      // scheduled time is appended after that as the static hold, per
+      // point 4. Grand total = 0.875 + 0.2 = 1.075 units = 2.15 viewports
+      // of scroll = 215%.
+      var ABOUT_START = 0.375;
+      var ABOUT_MID = 0.625;
+      var ABOUT_END = 0.875;
+      var GRAND_END = 1.075;
+
       var tl = gsap.timeline({
         scrollTrigger: {
           trigger: heroAboutStack,
           start: 'top top',
-          end: '+=100%',
+          end: '+=215%',
           scrub: true,
           pin: true,
           onUpdate: function (self) {
-            header.classList.toggle('is-visible', self.progress >= 0.92);
+            header.classList.toggle('is-visible', self.progress >= 0.85);
           }
         }
       });
 
-      // Same scroll range as the hero content, but each element recedes to
-      // its own z-depth so the three read as separate parallax layers.
+      // Hero's own tween - untouched from before this round, same values,
+      // same 0->0.5 span, same resulting absolute scroll-distance pace.
       tl.to(heroShrink, { scale: 0.7, z: isMobile ? 0 : -650, opacity: 0, ease: 'none' }, 0);
 
       // About now sits in the exact same rectangle as the hero (both
       // position:absolute inset:0 in .hero-about-stack), so its own opaque
       // background - not just its content - would otherwise cover the hero
       // instantly rather than progressively. Fade the background itself in
-      // over the full timeline (backgroundColor, not opacity, so it doesn't
-      // compound with the children's own opacity tweens below) so the two
-      // cross-dissolve together, finishing exactly as the hero fades out.
+      // across About's own range (backgroundColor, not opacity, so it
+      // doesn't compound with the children's own opacity tweens below) so
+      // the two cross-dissolve together, finishing as About settles.
       if (aboutIntro) {
         var bgRgb = getComputedStyle(document.documentElement)
           .getPropertyValue('--color-bg').trim().match(/[\d.]+/g);
         gsap.set(aboutIntro, { backgroundColor: 'rgba(' + bgRgb.join(',') + ',0)' });
-        // duration matches the timeline's existing full span (see aboutPhoto
-        // below, which already spans "the whole timeline" at duration 0.5) -
-        // NOT 1, which would extend the timeline's total duration and
-        // squash every other tween's timing relative to scroll progress
-        tl.to(aboutIntro, { backgroundColor: 'rgb(' + bgRgb.join(',') + ')', ease: 'none', duration: 0.5 }, 0);
+        tl.to(aboutIntro, { backgroundColor: 'rgb(' + bgRgb.join(',') + ')', ease: 'none', duration: ABOUT_END - ABOUT_START }, ABOUT_START);
       }
 
-      // Photo slides in from the left across the whole timeline; heading
-      // slides from the right and settles at the halfway point; body copy
-      // starts right where the heading finishes and settles alongside the
-      // photo at the end. xPercent (not a fixed px offset) scales with each
+      // Photo and heading now animate together and finish together at
+      // About's own midpoint; body copy starts there and runs to About's
+      // own completion. xPercent (not a fixed px offset) scales with each
       // element's own width, so the off-screen start clears the viewport at
       // any width - .about-intro has overflow:hidden to contain it either way.
       if (aboutPhoto && aboutHeading && aboutBody) {
@@ -241,10 +254,20 @@ document.addEventListener('DOMContentLoaded', function () {
         gsap.set(aboutHeading, { xPercent: 100, opacity: 0 });
         gsap.set(aboutBody, { xPercent: 100, opacity: 0 });
 
-        tl.to(aboutPhoto, { xPercent: 0, opacity: 1, ease: 'none', duration: 0.5 }, 0);
-        tl.to(aboutHeading, { xPercent: 0, opacity: 1, ease: 'none', duration: 0.25 }, 0);
-        tl.to(aboutBody, { xPercent: 0, opacity: 1, ease: 'none', duration: 0.25 }, 0.25);
+        tl.to(aboutPhoto, { xPercent: 0, opacity: 1, ease: 'none', duration: ABOUT_MID - ABOUT_START }, ABOUT_START);
+        tl.to(aboutHeading, { xPercent: 0, opacity: 1, ease: 'none', duration: ABOUT_MID - ABOUT_START }, ABOUT_START);
+        tl.to(aboutBody, { xPercent: 0, opacity: 1, ease: 'none', duration: ABOUT_END - ABOUT_MID }, ABOUT_MID);
       }
+
+      // Nothing is scheduled from ABOUT_END to GRAND_END - GSAP otherwise
+      // auto-computes the timeline's own total duration as the max end time
+      // of its real children (0.875), which would silently stretch the
+      // whole sequence to fill the full (already-extended) pin distance
+      // and eliminate the hold entirely. This empty tween, targeting
+      // nothing, forces the timeline's real total to match GRAND_END so
+      // the scrollTrigger's scroll-distance-to-progress mapping lines up
+      // with what the position numbers above assume.
+      tl.to({}, { duration: GRAND_END - ABOUT_END }, ABOUT_END);
 
       whenEntranceSettled(function () {
         if (asideLeft) {
