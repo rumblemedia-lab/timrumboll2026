@@ -86,10 +86,17 @@ h3 { font-size: 1.15rem; font-weight: 700; }
   height: 100%;
 }
 .site-header .logo {
-  font-family: var(--font-heading);
-  font-weight: 800;
-  font-size: 1.15rem;
+  display: flex;
+  align-items: center;
   text-decoration: none;
+}
+.logo-wordmark {
+  /* Comfortably within the ~76px header without looking cramped or
+     oversized - width scales proportionally from the SVG's own aspect
+     ratio (block display avoids the few px of inline-image baseline gap). */
+  display: block;
+  height: 40px;
+  width: auto;
 }
 
 /* Nav toggle (hamburger) - same on both breakpoints, opens .site-nav below */
