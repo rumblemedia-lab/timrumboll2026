@@ -91,7 +91,7 @@ title: Home
   </div>
 </section>
 
-<section class="section">
+<section class="section" style="border-bottom:none;">
   <div class="wrap">
     <div class="section-head reveal">
       <p class="eyebrow">Recent projects</p>
@@ -112,23 +112,5 @@ title: Home
       {% endfor %}
     </div>
     <p style="margin-top:2rem;" class="reveal"><a class="btn btn-ghost" href="{{ '/projects/' | relative_url }}">View all projects &rarr;</a></p>
-  </div>
-</section>
-
-<section class="section" id="contact" style="border-bottom:none;">
-  <div class="wrap">
-    <div class="section-head reveal">
-      <p class="eyebrow">Get in touch</p>
-      <h2>Let's get your script voiced</h2>
-      <p>The fastest way to get a quote is email, with your script (or a rough word count) and where the finished audio needs to go.</p>
-    </div>
-    <div class="reveal">
-      <a class="btn btn-primary" href="mailto:{{ site.data.contact.email }}">{{ site.data.contact.email }}</a>
-      <p style="margin-top:1rem; color:var(--color-text-muted);">
-        Phone: {{ site.data.contact.phone }}<br>
-        {{ site.data.contact.remote_note }}<br>
-        {{ site.data.contact.turnaround }}
-      </p>
-    </div>
   </div>
 </section>

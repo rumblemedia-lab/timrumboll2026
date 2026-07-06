@@ -11,7 +11,7 @@ manually FTPing files.
   homepage "recent projects" list
 - `_notes/` — blog-style posts, shown on `/notes/`
 - `about.md` — simple content page
-- `_data/contact.yml` — contact details shown in the homepage's `#contact` section
+- `_data/contact.yml` — contact details shown in the hero's contact links and elsewhere (About page, footer, nav)
 - `assets/audio/` — put your real MP3 files here
 - `admin/` — the Decap CMS panel (lives at `yoursite.com/admin`)
 - `.github/workflows/deploy.yml` — builds the site and FTPs it to your
