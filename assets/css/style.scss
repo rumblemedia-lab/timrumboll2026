@@ -382,12 +382,24 @@ body.is-loaded .hero-aside { opacity: 1; transform: translateY(0); }
   color: inherit;
 }
 .contact-link:hover { opacity: 0.6; }
+/* Separator between the two contact links - its own inert element (not
+   inside either <a>'s content/hitbox) so it never becomes part of
+   either link's clickable area; hidden on mobile, where the two lines
+   stack instead (see the two media queries below). */
+.contact-sep {
+  display: none;
+  color: var(--color-text-muted);
+}
 
 @media (min-width: 761px) {
   /* Same pattern already used on mobile: contact links sit in normal
      flow under the tagline, "hear more" stays absolutely positioned,
      now bottom-right (was top-left-ish) to match the mobile pattern. */
-  .hero-aside-right { margin-top: 1.25rem; }
+  /* Desktop only: email/phone on one line instead of mobile's stacked
+     pair - gap:0 since the separator's own margins (below) provide the
+     spacing instead, so it isn't double-applied on top of a flex gap. */
+  .hero-aside-right { margin-top: 1.25rem; flex-direction: row; align-items: baseline; gap: 0; }
+  .contact-sep { display: inline-block; margin: 0 0.75rem; }
   .hero-aside-left { position: absolute; right: 12%; bottom: 10%; }
   /* Desktop-only: hero-aside-right now sitting in-flow (rather than
      absolutely positioned out of it) needs a bit more vertical room than

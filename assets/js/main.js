@@ -255,14 +255,6 @@ document.addEventListener('DOMContentLoaded', function () {
       entranceSettled = true;
     }
 
-    // A pure ease-in (sine.in, power1.in) stays too flat near progress 0 to
-    // clear "hear more"'s linear pace, collapsing the two together around
-    // the midpoint - blend in some linear speed to keep a faster floor
-    // early while still trailing the hero's rate.
-    function asideRightEase(p) {
-      return p * 0.7 + p * p * 0.3;
-    }
-
     var mm = gsap.matchMedia();
     mm.add({
       isMobile: '(max-width: 760px)',
@@ -357,18 +349,28 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       whenEntranceSettled(function () {
+        // "hear more" and the contact links used to recede on their own
+        // distinct z-depth/ease curves, separate from the hero's own
+        // tween - on desktop the difference was too subtle to read as
+        // parallax (no scale was ever applied to these, only z-translate,
+        // which under perspective alone is a much weaker effect than
+        // hero's combined scale+z shrink), and the preference now is for
+        // them to recede as one unit WITH the hero rather than at their
+        // own rate anyway. Mirror heroShrink's own tween exactly (same
+        // scale/z/opacity/ease/duration/position) rather than a separate
+        // tween with matching-by-coincidence values, so they can't drift
+        // apart if hero's own tween ever changes.
+        var recedeWithHero = [];
         if (asideLeft) {
-          tl.to(asideLeft, { z: isMobile ? 0 : -300, opacity: 0, ease: 'none' }, 0);
+          recedeWithHero.push(asideLeft);
           asideLeft.classList.add('is-parallaxing');
         }
         if (asideRight) {
-          // opacity fades linearly like the other two (so it stays comparably
-          // visible throughout), but z recedes on its own curve - slower
-          // early, faster late - so its motion reads as distinct, not just
-          // a different endpoint
-          tl.to(asideRight, { opacity: 0, ease: 'none' }, 0);
-          tl.to(asideRight, { z: isMobile ? 0 : -550, ease: isMobile ? 'none' : asideRightEase }, 0);
+          recedeWithHero.push(asideRight);
           asideRight.classList.add('is-parallaxing');
+        }
+        if (recedeWithHero.length) {
+          tl.to(recedeWithHero, { scale: 0.7, z: isMobile ? 0 : -650, opacity: 0, ease: 'none' }, 0);
         }
         tl.progress(tl.progress()); // re-render at current scroll position now the tweens exist
       });
