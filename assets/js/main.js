@@ -137,13 +137,11 @@ document.addEventListener('DOMContentLoaded', function () {
   })();
 
   /* ---------------------------------------------------------------------
-     GSAP: register plugins used elsewhere in this file. ScrollTrigger
-     isn't driving anything yet (that lands in a later round) - this just
-     gets the plumbing (and its Lenis sync, below) in place.
+     GSAP: register plugins used elsewhere in this file.
      ------------------------------------------------------------------- */
-  var hasGsap = !!(window.gsap && window.ScrollTrigger && window.SplitText);
+  var hasGsap = !!(window.gsap && window.ScrollTrigger && window.SplitText && window.Flip && window.EasePack);
   if (hasGsap) {
-    gsap.registerPlugin(ScrollTrigger, SplitText);
+    gsap.registerPlugin(ScrollTrigger, SplitText, Flip, EasePack);
   }
 
   /* ---------------------------------------------------------------------
@@ -673,5 +671,93 @@ document.addEventListener('DOMContentLoaded', function () {
     cycle();
   }
   initHeroScramble();
+
+  /* ---------------------------------------------------------------------
+     Bento zoom intro (projects gallery preamble) - a curated set of
+     projects (site.projects flagged featured_in_intro, see index.html)
+     laid out in a compact CSS grid that Flip-zooms into a much larger
+     version of the same grid as the section pins and scrubs with scroll,
+     while each tile's image desaturates from monochrome to full colour
+     in step. A separate, independent pinned ScrollTrigger from the
+     hero/About one above - its own section, further down the page, not
+     part of that shared timeline.
+
+     Skipped server-side entirely when no projects qualify (see
+     index.html), so there's nothing here to wire up in that case. Also
+     skipped (falls back to the plain static compact grid already in the
+     markup, already forced to full colour - see style.scss's reduced-
+     motion block) when reduced motion is preferred or GSAP/Flip/EasePack
+     didn't load, same convention as the hero pin above.
+     ------------------------------------------------------------------- */
+  function initBentoIntro() {
+    var stage = document.getElementById('bentoStage');
+    var grid = document.getElementById('bentoGrid');
+    if (!stage || !grid || prefersReducedMotion || !hasGsap) return;
+
+    var tiles = grid.querySelectorAll('.bento-tile');
+    if (!tiles.length) return;
+    var images = [];
+    tiles.forEach(function (t) {
+      var img = t.querySelector('img');
+      if (img) images.push(img);
+    });
+
+    // The grid is left in its compact CSS state (that's also the reduced-
+    // motion/no-JS static fallback - see style.scss) - capture the "after"
+    // state by temporarily switching to the much-larger .is-target grid
+    // (same grid-template-areas, bigger tracks), measuring, then
+    // reverting - synchronous, so the larger layout is never painted.
+    grid.classList.add('is-target');
+    var targetState = Flip.getState(tiles);
+    grid.classList.remove('is-target');
+
+    // Flip.to() (not .from()/.fromTo()) because the live DOM right now,
+    // above, IS the "before" state (compact) - this animates the tiles
+    // AS THEY CURRENTLY SIT to the given targetState.
+    //
+    // Not paused: a paused nested timeline is excluded from its parent's
+    // own duration calculation in GSAP, which would leave pinTl (below)
+    // measuring a duration of 0 and nothing to actually scrub - harmless
+    // here since pinTl's own ScrollTrigger (scrub:true) already holds its
+    // playhead entirely, so flipTl never free-plays once nested into it.
+    var flipTl = Flip.to(targetState, {
+      duration: 1,
+      // scale:true animates via a GPU-friendly transform (scaleX/scaleY)
+      // instead of Flip's default of tweening literal width/height (a
+      // layout property, reflowing every frame) - important for a scrubbed
+      // effect like this one that updates continuously with scroll.
+      scale: true,
+      // Exponential (not linear) scale curve - matches the reference GSAP
+      // bento-zoom demo's own easing choice for this effect, so the zoom
+      // reads as accelerating rather than a flat, mechanical scale-up.
+      ease: 'expoScale(0.5,7)'
+    });
+
+    var maxProgress = 0;
+
+    var pinTl = gsap.timeline({
+      scrollTrigger: {
+        trigger: stage,
+        start: 'top top',
+        end: '+=150%',
+        scrub: true,
+        pin: true,
+        onUpdate: function (self) {
+          // Colour reveal tracks the same progress driving the zoom below,
+          // but only ever ratchets forward: once a tile's reached full
+          // colour it stays that way even if the user scrolls back up
+          // past this section (per earlier decision) - unlike the zoom
+          // itself, which is a normal, fully-reversible scrub.
+          maxProgress = Math.max(maxProgress, self.progress);
+          var gray = 1 - maxProgress;
+          images.forEach(function (img) {
+            img.style.filter = 'grayscale(' + gray + ')';
+          });
+        }
+      }
+    });
+    pinTl.add(flipTl, 0);
+  }
+  initBentoIntro();
 
 });

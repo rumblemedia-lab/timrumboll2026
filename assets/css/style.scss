@@ -623,6 +623,14 @@ body.is-loaded .play-icon-triangle { opacity: 1; transform: scale(1); }
   .lightbox {
     transition: none !important;
   }
+  /* Bento zoom intro: main.js skips the whole Flip/pin/scrub sequence for
+     this preference (see initBentoIntro), leaving the plain compact grid
+     as-is - just force it straight to its "settled" full-colour state
+     instead of the monochrome resting state that grid is normally given
+     (above) as the starting point for the scroll-driven reveal. */
+  .bento-tile img {
+    filter: none !important;
+  }
 }
 
 /* Sections ---------------------------------------------------------------- */
@@ -773,6 +781,154 @@ audio { width: 100%; height: 34px; filter: sepia(0.15) saturate(0.6); }
 }
 .project-row .project-excerpt { color: var(--color-text-muted); margin-top: 0.3rem; font-size: 0.95rem; }
 .project-row:hover .project-client { opacity: 0.6; }
+
+/* Bento zoom intro (homepage) -------------------------------------------------
+   A curated set of projects (site.projects flagged featured_in_intro, with
+   a featured_image - see index.html) laid out in a compact CSS grid that
+   main.js Flip-zooms into a much larger version of the same grid as the
+   section pins and scrubs with scroll. Skipped server-side entirely when
+   no projects qualify (see index.html), so there's no empty section here.
+
+   .bento-grid's [data-count="N"] blocks below are hand-authored per count
+   (1-8, capped at 8 - see index.html) rather than a single fixed 8-slot
+   layout: each is its own valid, gap-free grid-template-areas partition
+   sized for exactly that many tiles, so fewer curated projects produce a
+   smaller, still-fully-tiled layout instead of empty placeholder gaps.
+   .bento-tile:nth-child(N) below maps every count's Nth tile (in the same
+   date-sorted order the query renders them) to the Nth letter of that
+   count's own area names, so the mapping stays correct across all of them.
+
+   Each [data-count] rule pairs a compact block (small, fixed-px tracks -
+   the resting layout, and also the entire reduced-motion/no-JS fallback
+   since nothing else applies then) with a same-selector .is-target block
+   (much larger vw-based tracks, same grid-template-areas so each tile
+   keeps its slot). main.js only ever applies .is-target for one
+   synchronous instant (to capture Flip's "after" measurements) and
+   reverts it immediately after - it's never visible mid-transition,
+   only used as a measurement target for the Flip tween. */
+.bento-stage {
+  position: relative;
+  height: 100svh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bento-grid {
+  display: grid;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 900px;
+}
+.bento-grid.is-target {
+  max-width: none;
+  /* max(), not a flat 40vw: on a narrow/tall mobile viewport, 40vw alone
+     (sized with desktop widths in mind) comes out smaller than some of
+     the compact rows' own fixed px heights above, shrinking rather than
+     growing on that axis - the vh term keeps the target meaningfully
+     bigger than compact on every tested width. String interpolation
+     forces this through as a literal CSS max() - see the height rule
+     earlier in this file for the same Sass-vs-CSS-max ambiguity (Sass
+     tries to evaluate it at compile time and errors on mismatched vw/vh
+     units, rather than passing a CSS-native max() through untouched). */
+  --bento-cell: #{"max(40vw, 55vh)"};
+}
+
+.bento-tile {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--color-surface);
+}
+.bento-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: grayscale(1);
+}
+
+.bento-tile:nth-child(1) { grid-area: a; }
+.bento-tile:nth-child(2) { grid-area: b; }
+.bento-tile:nth-child(3) { grid-area: c; }
+.bento-tile:nth-child(4) { grid-area: d; }
+.bento-tile:nth-child(5) { grid-area: e; }
+.bento-tile:nth-child(6) { grid-area: f; }
+.bento-tile:nth-child(7) { grid-area: g; }
+.bento-tile:nth-child(8) { grid-area: h; }
+
+.bento-grid[data-count="1"] {
+  grid-template-columns: 1fr;
+  grid-template-areas: "a";
+  grid-auto-rows: 320px;
+}
+.bento-grid.is-target[data-count="1"] { grid-auto-rows: var(--bento-cell); }
+
+.bento-grid[data-count="2"] {
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-areas: "a a b";
+  grid-auto-rows: 280px;
+}
+.bento-grid.is-target[data-count="2"] { grid-template-columns: repeat(3, var(--bento-cell)); grid-auto-rows: var(--bento-cell); }
+
+.bento-grid[data-count="3"] {
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-areas:
+    "a a b"
+    "a a c";
+  grid-auto-rows: 140px;
+}
+.bento-grid.is-target[data-count="3"] { grid-template-columns: repeat(3, var(--bento-cell)); grid-auto-rows: var(--bento-cell); }
+
+.bento-grid[data-count="4"] {
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-areas:
+    "a a b c"
+    "a a b d";
+  grid-auto-rows: 130px;
+}
+.bento-grid.is-target[data-count="4"] { grid-template-columns: repeat(4, var(--bento-cell)); grid-auto-rows: var(--bento-cell); }
+
+.bento-grid[data-count="5"] {
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-areas:
+    "a a b c"
+    "a a d e";
+  grid-auto-rows: 130px;
+}
+.bento-grid.is-target[data-count="5"] { grid-template-columns: repeat(4, var(--bento-cell)); grid-auto-rows: var(--bento-cell); }
+
+.bento-grid[data-count="6"] {
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-areas:
+    "a a b c"
+    "a a d c"
+    "e e f f";
+  grid-auto-rows: 100px;
+}
+.bento-grid.is-target[data-count="6"] { grid-template-columns: repeat(4, var(--bento-cell)); grid-auto-rows: var(--bento-cell); }
+
+.bento-grid[data-count="7"] {
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-areas:
+    "a a b c"
+    "a a d c"
+    "e f d c"
+    "e f g g";
+  grid-auto-rows: 90px;
+}
+.bento-grid.is-target[data-count="7"] { grid-template-columns: repeat(4, var(--bento-cell)); grid-auto-rows: var(--bento-cell); }
+
+.bento-grid[data-count="8"] {
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-areas:
+    "a a b c"
+    "a a d c"
+    "e f d g"
+    "e f h h";
+  grid-auto-rows: 90px;
+}
+.bento-grid.is-target[data-count="8"] { grid-template-columns: repeat(4, var(--bento-cell)); grid-auto-rows: var(--bento-cell); }
 
 /* Projects gallery (homepage) ------------------------------------------------
    Same auto-fill/minmax grid pattern as .reel-grid above, for consistency.

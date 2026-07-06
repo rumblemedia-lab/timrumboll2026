@@ -91,6 +91,32 @@ title: Home
   </div>
 </section>
 
+{% assign bento_projects = site.projects | where_exp: "project", "project.featured_in_intro == true" | where_exp: "project", "project.featured_image" | sort: 'date' | reverse %}
+{% assign bento_count = bento_projects.size %}
+{% if bento_count > 8 %}
+  {% assign bento_projects = bento_projects | slice: 0, 8 %}
+  {% assign bento_count = 8 %}
+{% endif %}
+{% if bento_count > 0 %}
+<section class="section bento-intro" id="bento-intro">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">Featured work</p>
+      <h2>Zoom in on a few favourites</h2>
+    </div>
+  </div>
+  <div class="bento-stage" id="bentoStage">
+    <div class="bento-grid" id="bentoGrid" data-count="{{ bento_count }}">
+      {% for project in bento_projects %}
+      <div class="bento-tile">
+        <img src="{{ project.featured_image | relative_url }}" alt="{{ project.client }}" loading="lazy">
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
 <section class="section" style="border-bottom:none;">
   <div class="wrap">
     <div class="section-head reveal">

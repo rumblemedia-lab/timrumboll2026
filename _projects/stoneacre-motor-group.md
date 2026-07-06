@@ -4,6 +4,7 @@ sector: Radio & TV
 date: 2024-03-10
 excerpt: Long-running voice for regional radio and TV campaigns across the dealer group's seasonal offers.
 featured_image: assets/images/project-placeholder-1.jpg
+featured_in_intro: true
 audio: stoneacre-sample.mp3
 duration: "0:38"
 ---
