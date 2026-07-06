@@ -475,7 +475,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var staggerStepMs = 80; // ripple delay between the start of each character's own sequence
     var flipDuration = 0.03; // seconds, each slide-in/slide-out tween - kept short so
                               // flips read as a crisp flicker rather than a blur
-    var letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    var letters = 'abcdefghijklmnopqrstuvwxyz';
 
     // Sample GSAP's power2.inOut ease against a triangular "distance from
     // the middle of the sequence" value: that ease is slow-velocity at its
