@@ -58,6 +58,74 @@ document.addEventListener('DOMContentLoaded', function () {
   })();
 
   /* ---------------------------------------------------------------------
+     Projects gallery lightbox - same interaction pattern as the hamburger
+     nav above (aria-expanded state, native button Enter/Space, click-
+     outside-to-close via a document-level listener, Escape closes and
+     returns focus), just adapted for many trigger tiles sharing one
+     overlay instead of a single toggle/panel pair. Plain vanilla JS like
+     the nav toggle, for the same reason: it's a functional interaction,
+     not a decorative animation, so it should work the same regardless of
+     motion preference or whether GSAP loaded (reduced-motion only strips
+     the CSS transition - see style.scss).
+     ------------------------------------------------------------------- */
+  (function initGalleryLightbox() {
+    var lightbox = document.getElementById('lightbox');
+    var lightboxInner = lightbox ? lightbox.querySelector('.lightbox-inner') : null;
+    var lightboxImg = document.getElementById('lightboxImg');
+    var closeBtn = document.getElementById('lightboxClose');
+    var tiles = document.querySelectorAll('.gallery-tile');
+    if (!lightbox || !lightboxInner || !lightboxImg || !closeBtn || !tiles.length) return;
+
+    var triggerEl = null;
+
+    function openLightbox(tile) {
+      triggerEl = tile;
+      lightboxImg.src = tile.getAttribute('data-full');
+      lightboxImg.alt = tile.querySelector('img').alt;
+      lightbox.classList.add('is-open');
+      lightbox.setAttribute('aria-hidden', 'false');
+      tile.setAttribute('aria-expanded', 'true');
+      closeBtn.focus();
+    }
+
+    function closeLightbox() {
+      if (!lightbox.classList.contains('is-open')) return;
+      lightbox.classList.remove('is-open');
+      lightbox.setAttribute('aria-hidden', 'true');
+      if (triggerEl) {
+        triggerEl.setAttribute('aria-expanded', 'false');
+        triggerEl.focus();
+      }
+      triggerEl = null;
+    }
+
+    tiles.forEach(function (tile) {
+      tile.addEventListener('click', function (e) {
+        // Stop this from also reaching the document-level "outside click"
+        // listener below - tiles live outside .lightbox-inner (they're
+        // triggers, not lightbox content), so without this the same click
+        // that opens the lightbox would immediately close it again.
+        e.stopPropagation();
+        openLightbox(tile);
+      });
+    });
+
+    closeBtn.addEventListener('click', closeLightbox);
+
+    document.addEventListener('click', function (e) {
+      if (!lightbox.classList.contains('is-open')) return;
+      if (lightboxInner.contains(e.target)) return;
+      closeLightbox();
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && lightbox.classList.contains('is-open')) {
+        closeLightbox();
+      }
+    });
+  })();
+
+  /* ---------------------------------------------------------------------
      GSAP: register plugins used elsewhere in this file. ScrollTrigger
      isn't driving anything yet (that lands in a later round) - this just
      gets the plumbing (and its Lenis sync, below) in place.
