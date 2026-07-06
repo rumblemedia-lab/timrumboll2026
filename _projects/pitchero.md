@@ -3,6 +3,7 @@ client: Pitchero
 sector: Explainer video
 date: 2023-06-18
 excerpt: Product explainer voiceover for the grassroots sports club platform.
+featured_image: assets/images/project-placeholder-3.jpg
 audio: pitchero-sample.mp3
 duration: "0:52"
 ---
