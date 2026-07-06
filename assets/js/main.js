@@ -290,11 +290,11 @@ document.addEventListener('DOMContentLoaded', function () {
       var ABOUT_MID = 0.625;
       var ABOUT_END = 0.875;
       // Body copy now starts once the heading's own tween (ABOUT_START to
-      // ABOUT_MID) is 25% done (was 50% last round), overlapping with
-      // most of it rather than just its second half - its end point is
-      // unchanged (still ABOUT_END), so this only stretches out (slows
-      // down) body's own reveal further, which is fine.
-      var BODY_START = ABOUT_START + 0.25 * (ABOUT_MID - ABOUT_START);
+      // ABOUT_MID) is 40% done (was 25% last round), overlapping with
+      // most of it - its end point is unchanged (still ABOUT_END), so
+      // this only shortens (speeds up slightly) body's own reveal versus
+      // last round, which is fine.
+      var BODY_START = ABOUT_START + 0.40 * (ABOUT_MID - ABOUT_START);
       var HOLD = isMobile ? 0.05 : 0.1;
       var GRAND_END = ABOUT_END + HOLD;
       // Reveal the header a short way into the hold (20% of it) rather than
