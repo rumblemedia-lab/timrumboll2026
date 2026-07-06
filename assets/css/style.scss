@@ -73,7 +73,10 @@ h3 { font-size: 1.15rem; font-weight: 700; }
   top: 0; left: 0; right: 0;
   height: var(--header-h);
   z-index: 50;
-  background: rgba(235, 230, 225, 0.86);
+  /* color-mix (not a hardcoded rgba fallback) so this tracks --color-bg's
+     value automatically if it ever changes again, rather than needing a
+     second manually-kept-in-sync translucent token. */
+  background: color-mix(in srgb, var(--color-bg) 86%, transparent);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--color-hairline);
   transition: transform 0.5s var(--ease-out-expo), opacity 0.4s ease;
