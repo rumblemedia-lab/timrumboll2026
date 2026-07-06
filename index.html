@@ -94,23 +94,26 @@ title: Home
 <section class="section" style="border-bottom:none;">
   <div class="wrap">
     <div class="section-head reveal">
-      <p class="eyebrow">Recent projects</p>
-      <h2>Work I've voiced lately</h2>
-      <p>A running log of real briefs &mdash; client, sector and a sample from each.</p>
+      <p class="eyebrow">Projects gallery</p>
+      <h2>A closer look at the work</h2>
+      <p>Click a project to see it larger.</p>
     </div>
-    <div class="project-log">
-      {% assign recent_projects = site.projects | sort: 'date' | reverse | limit: 4 %}
-      {% for project in recent_projects %}
-      <a class="project-row reveal" href="{{ project.url | relative_url }}">
-        <span class="project-date">{{ project.date | date: "%b %Y" }}</span>
-        <span>
-          <span class="project-client">{{ project.client }}</span>
-          <div class="project-excerpt">{{ project.excerpt }}</div>
-        </span>
-        <span class="project-sector">{{ project.sector }}</span>
-      </a>
+    <div class="project-gallery">
+      {% assign gallery_projects = site.projects | sort: 'date' | reverse | where_exp: "project", "project.featured_image" %}
+      {% for project in gallery_projects %}
+      <button type="button" class="gallery-tile reveal" aria-expanded="false" aria-label="Enlarge {{ project.client }}" data-full="{{ project.featured_image | relative_url }}">
+        <img src="{{ project.featured_image | relative_url }}" alt="{{ project.client }}" loading="lazy">
+        <span class="gallery-caption">{{ project.client }}</span>
+      </button>
       {% endfor %}
     </div>
-    <p style="margin-top:2rem;" class="reveal"><a class="btn btn-ghost" href="{{ '/projects/' | relative_url }}">View all projects &rarr;</a></p>
+    <p style="margin-top:2rem;" class="reveal"><a class="btn btn-ghost" href="{{ '/projects/' | relative_url }}">Browse the full project log &rarr;</a></p>
   </div>
 </section>
+
+<div class="lightbox" id="lightbox" aria-hidden="true">
+  <button type="button" class="lightbox-close" id="lightboxClose" aria-label="Close">&times;</button>
+  <div class="lightbox-inner">
+    <img class="lightbox-img" id="lightboxImg" src="" alt="">
+  </div>
+</div>
