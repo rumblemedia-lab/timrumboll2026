@@ -335,8 +335,17 @@ document.addEventListener('DOMContentLoaded', function () {
       // doesn't compound with the children's own opacity tweens below) so
       // the two cross-dissolve together, finishing as About settles.
       if (aboutIntro) {
-        var bgRgb = getComputedStyle(document.documentElement)
-          .getPropertyValue('--color-bg').trim().match(/[\d.]+/g);
+        // --color-bg's custom-property string is read back verbatim,
+        // whatever format it's authored in (hex, rgb(), a named colour,
+        // etc.) - rather than assuming one, apply it to a throwaway
+        // element's `color` and read that element's *computed* style
+        // back, which the browser always normalizes to "rgb(r, g, b)"
+        // regardless of input format.
+        var bgProbe = document.createElement('div');
+        bgProbe.style.color = getComputedStyle(document.documentElement).getPropertyValue('--color-bg').trim();
+        document.body.appendChild(bgProbe);
+        var bgRgb = getComputedStyle(bgProbe).color.match(/[\d.]+/g);
+        document.body.removeChild(bgProbe);
         gsap.set(aboutIntro, { backgroundColor: 'rgba(' + bgRgb.join(',') + ',0)' });
         tl.to(aboutIntro, { backgroundColor: 'rgb(' + bgRgb.join(',') + ')', ease: 'none', duration: ABOUT_END - ABOUT_START }, ABOUT_START);
       }

@@ -4,10 +4,10 @@
    Design tokens
    ========================================================================== */
 :root {
-  --color-bg: rgb(235, 230, 225);
+  --color-bg: #F2EFEB;
   --color-surface: rgb(226, 220, 213);
   --color-text: rgb(43, 38, 35);
-  --color-text-muted: rgba(43, 38, 35, 0.62);
+  --color-text-muted: #4D4641;
   --color-hairline: rgba(43, 38, 35, 0.14);
 
   --font-heading: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
@@ -390,6 +390,11 @@ body.is-loaded .hero-aside { opacity: 1; transform: translateY(0); }
 }
 .hero-aside-right:hover { opacity: 1 !important; }
 .contact-link {
+  /* Overrides the Crimson Pro italic inherited from .hero-aside above -
+     "hear more" (.hero-aside-left) keeps that styling untouched; only
+     the contact links switch to Inter. */
+  font-family: var(--font-body);
+  font-style: normal;
   display: block;
   text-decoration: none;
   color: inherit;
@@ -706,8 +711,8 @@ audio { width: 100%; height: 34px; filter: sepia(0.15) saturate(0.6); }
 
 /* Buttons ------------------------------------------------------------------- */
 .btn {
-  font-family: var(--font-accent);
-  font-style: italic;
+  font-family: var(--font-body);
+  font-style: normal;
   font-weight: 500;
   font-size: 1rem;
   text-decoration: none;
