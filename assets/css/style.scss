@@ -241,6 +241,19 @@ body:not(.has-hero-header) main { padding-top: calc(var(--header-h) + 12px); }
   position: absolute;
   inset: 0;
 }
+/* .about-intro sits above .hero (higher z-index, further below) for the
+   whole pin, so it would otherwise intercept clicks meant for hero's own
+   content (play button, aside links) even while still substantially
+   transparent - main.js toggles .is-interactive once About's own
+   background fade is far enough along that it's the genuinely visible
+   layer of the two, at which point it should properly receive clicks
+   (and hero, now visually covered, correctly stop getting them). */
+.hero-about-stack.is-stacked .about-intro {
+  pointer-events: none;
+}
+.hero-about-stack.is-stacked .about-intro.is-interactive {
+  pointer-events: auto;
+}
 /* .hero's own content (the shrinking name/tagline) is centered via flex
    *within this box* - if the wrapper is taller than one viewport (e.g.
    to fit About's content, see --about-content-height above), plain
