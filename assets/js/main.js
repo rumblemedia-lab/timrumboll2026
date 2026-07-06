@@ -279,13 +279,14 @@ document.addEventListener('DOMContentLoaded', function () {
       // hero's own 0->0.5 span, i.e. hero's final quarter overlaps with
       // About's start), and reuses the same "0.5 units = 1 viewport" pace
       // for its own sequence (0.375 to 0.875) that its combined sequence
-      // used previously, so it isn't rushed relative to before. A further
-      // HOLD units of nothing-scheduled time is appended after that as the
-      // static hold - mobile's is half of desktop's (0.05 vs 0.1 units,
-      // i.e. 0.1 vs 0.2 viewports, each halved again this round from the
-      // previous round's 0.1/0.2). Grand total is therefore 0.925 units
-      // (185%) on mobile, 0.975 units (195%) on desktop - end is derived
-      // from it (units * 2 viewports/unit * 100%).
+      // used previously, so it isn't rushed relative to before. The static
+      // hold that used to follow (a placeholder tween padding the timeline
+      // out further, shrunk over several rounds - most recently 0.05/0.1
+      // units mobile/desktop) is now removed entirely: the pin releases
+      // immediately once About settles, right at ABOUT_END, rather than
+      // after an added pause. Grand total is therefore just 0.875 units
+      // (175%) on both breakpoints now (previously 0.925/0.975) - end is
+      // derived from it (units * 2 viewports/unit * 100%).
       var ABOUT_START = 0.375;
       var ABOUT_MID = 0.625;
       var ABOUT_END = 0.875;
@@ -295,13 +296,10 @@ document.addEventListener('DOMContentLoaded', function () {
       // this only shortens (speeds up slightly) body's own reveal versus
       // last round, which is fine.
       var BODY_START = ABOUT_START + 0.40 * (ABOUT_MID - ABOUT_START);
-      var HOLD = isMobile ? 0.05 : 0.1;
-      var GRAND_END = ABOUT_END + HOLD;
-      // Reveal the header a short way into the hold (20% of it) rather than
-      // at a fixed fraction of the grand total - GRAND_END now differs by
-      // breakpoint, so a hardcoded fraction calibrated for one would fire
-      // at the wrong point (even before About settles) on the other.
-      var HEADER_REVEAL = (ABOUT_END + HOLD * 0.2) / GRAND_END;
+      var GRAND_END = ABOUT_END;
+      // Reveal the header right as the timeline completes (About settles)
+      // rather than partway through a hold, since there's no longer one.
+      var HEADER_REVEAL = 1;
 
       var tl = gsap.timeline({
         scrollTrigger: {
@@ -357,16 +355,6 @@ document.addEventListener('DOMContentLoaded', function () {
         tl.to(aboutBody, { xPercent: 0, ease: 'power2.out', duration: ABOUT_END - BODY_START }, BODY_START);
         tl.to(aboutBody, { opacity: 1, ease: 'none', duration: ABOUT_END - BODY_START }, BODY_START);
       }
-
-      // Nothing is scheduled from ABOUT_END to GRAND_END - GSAP otherwise
-      // auto-computes the timeline's own total duration as the max end time
-      // of its real children (0.875), which would silently stretch the
-      // whole sequence to fill the full (already-extended) pin distance
-      // and eliminate the hold entirely. This empty tween, targeting
-      // nothing, forces the timeline's real total to match GRAND_END so
-      // the scrollTrigger's scroll-distance-to-progress mapping lines up
-      // with what the position numbers above assume.
-      tl.to({}, { duration: GRAND_END - ABOUT_END }, ABOUT_END);
 
       whenEntranceSettled(function () {
         if (asideLeft) {
