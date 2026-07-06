@@ -25,6 +25,12 @@ html.lenis, html.lenis body { height: auto; }
 .lenis.lenis-smooth { scroll-behavior: auto; }
 .lenis.lenis-stopped { overflow: hidden; }
 
+/* Lightbox scroll lock: covers native scroll directly (Lenis's own
+   lenis-stopped class above only exists while Lenis is active - this is
+   the fallback for reduced-motion / no-Lenis, and a harmless belt-and-braces
+   backup otherwise). */
+html.lightbox-lock { overflow: hidden; }
+
 body {
   margin: 0;
   background: var(--color-bg);
