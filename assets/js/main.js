@@ -349,7 +349,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
         tl.to(aboutPhoto, { xPercent: 0, opacity: 1, ease: 'none', duration: ABOUT_MID - ABOUT_START }, ABOUT_START);
         tl.to(aboutHeading, { xPercent: 0, opacity: 1, ease: 'none', duration: ABOUT_MID - ABOUT_START }, ABOUT_START);
-        tl.to(aboutBody, { xPercent: 0, opacity: 1, ease: 'none', duration: ABOUT_END - BODY_START }, BODY_START);
+        // Body's slide-in decelerates into its settled position (fast
+        // start, easing off) rather than the linear pace used everywhere
+        // else, split from its fade so the fade itself stays linear -
+        // same split already used for the aside-link parallax tweens
+        // (eased motion, linear opacity).
+        tl.to(aboutBody, { xPercent: 0, ease: 'power2.out', duration: ABOUT_END - BODY_START }, BODY_START);
+        tl.to(aboutBody, { opacity: 1, ease: 'none', duration: ABOUT_END - BODY_START }, BODY_START);
       }
 
       // Nothing is scheduled from ABOUT_END to GRAND_END - GSAP otherwise
