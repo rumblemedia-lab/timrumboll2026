@@ -292,6 +292,20 @@ document.addEventListener('DOMContentLoaded', function () {
       // Reveal the header right as the timeline completes (About settles)
       // rather than partway through a hold, since there's no longer one.
       var HEADER_REVEAL = 1;
+      // .about-intro sits on top of .hero for the entire pin (higher
+      // z-index, so it can visually cover the hero as it fades in) - but
+      // that means it also intercepts clicks meant for hero's own
+      // interactive content (the play button, aside links) for the whole
+      // pin, even while it's still substantially transparent and has
+      // nothing worth clicking yet itself. Toggle its pointer-events off
+      // until its own background fade (ABOUT_START to ABOUT_END, see
+      // below) is halfway done - i.e. once it's the more-opaque, more
+      // "genuinely visible" layer of the two - then on, so it (not hero
+      // underneath) correctly receives clicks from that point on. This is
+      // 2D stacking-order hit-testing, unrelated to the 3D translateZ
+      // depth hero/aside recede through - a transform-based fix wouldn't
+      // touch it.
+      var ABOUT_POINTER_THRESHOLD = ABOUT_MID / GRAND_END;
 
       var tl = gsap.timeline({
         scrollTrigger: {
@@ -302,6 +316,9 @@ document.addEventListener('DOMContentLoaded', function () {
           pin: true,
           onUpdate: function (self) {
             header.classList.toggle('is-visible', self.progress >= HEADER_REVEAL);
+            if (aboutIntro) {
+              aboutIntro.classList.toggle('is-interactive', self.progress >= ABOUT_POINTER_THRESHOLD);
+            }
           }
         }
       });
