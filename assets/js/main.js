@@ -85,6 +85,15 @@ document.addEventListener('DOMContentLoaded', function () {
       lightbox.classList.add('is-open');
       lightbox.setAttribute('aria-hidden', 'false');
       tile.setAttribute('aria-expanded', 'true');
+      // Lock background scroll: the html.lightbox-lock CSS rule covers plain
+      // native scroll (incl. the reduced-motion/no-Lenis case, where `lenis`
+      // below is null), while lenis.stop() is also needed because Lenis
+      // intercepts wheel/touch input itself rather than relying on the
+      // browser's native scroll - referencing `lenis` here is safe even
+      // though it's declared later in this same function, since this only
+      // runs on a later user interaction, by which time it's been assigned.
+      document.documentElement.classList.add('lightbox-lock');
+      if (lenis) lenis.stop();
       closeBtn.focus();
     }
 
@@ -92,6 +101,8 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!lightbox.classList.contains('is-open')) return;
       lightbox.classList.remove('is-open');
       lightbox.setAttribute('aria-hidden', 'true');
+      document.documentElement.classList.remove('lightbox-lock');
+      if (lenis) lenis.start();
       if (triggerEl) {
         triggerEl.setAttribute('aria-expanded', 'false');
         triggerEl.focus();
