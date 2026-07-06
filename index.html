@@ -81,10 +81,9 @@ title: Home
       {% for reel in site.data.showreels %}
       <div class="reel-card reveal">
         <div class="reel-meta">
-          <span class="reel-cat">{{ reel.category }}</span>
+          <h3>{{ reel.title }}</h3>
           <span class="reel-duration">{{ reel.duration }}</span>
         </div>
-        <h3>{{ reel.title }}</h3>
         <audio controls preload="none" src="{{ '/assets/audio/' | append: reel.file | relative_url }}"></audio>
       </div>
       {% endfor %}
