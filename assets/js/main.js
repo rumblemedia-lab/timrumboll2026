@@ -3,6 +3,61 @@ document.addEventListener('DOMContentLoaded', function () {
   var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* ---------------------------------------------------------------------
+     Nav toggle (hamburger) - plain vanilla JS, not gated behind GSAP/
+     reduced-motion like the animations below: it's site-wide (every page
+     has a header) and its open/close states are functional, not just
+     decorative, so it needs to work identically regardless of motion
+     preference or whether GSAP loaded. Reduced-motion only removes the
+     CSS transition (see style.scss), not this logic.
+     ------------------------------------------------------------------- */
+  (function initNavToggle() {
+    var siteHeader = document.querySelector('.site-header');
+    var navToggle = document.querySelector('.nav-toggle');
+    var siteNav = document.getElementById('site-nav');
+    if (!siteHeader || !navToggle || !siteNav) return;
+
+    function closeNav() {
+      siteHeader.classList.remove('nav-open');
+      navToggle.setAttribute('aria-expanded', 'false');
+      navToggle.setAttribute('aria-label', 'Open menu');
+    }
+
+    function openNav() {
+      siteHeader.classList.add('nav-open');
+      navToggle.setAttribute('aria-expanded', 'true');
+      navToggle.setAttribute('aria-label', 'Close menu');
+    }
+
+    navToggle.addEventListener('click', function () {
+      if (siteHeader.classList.contains('nav-open')) {
+        closeNav();
+      } else {
+        openNav();
+      }
+    });
+
+    siteNav.querySelectorAll('a').forEach(function (a) {
+      a.addEventListener('click', closeNav);
+    });
+
+    // Close on outside click/tap - anything within the header (the toggle
+    // itself, or the open panel) is left alone so this doesn't fight with
+    // the toggle's own click handler above.
+    document.addEventListener('click', function (e) {
+      if (!siteHeader.classList.contains('nav-open')) return;
+      if (siteHeader.contains(e.target)) return;
+      closeNav();
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && siteHeader.classList.contains('nav-open')) {
+        closeNav();
+        navToggle.focus();
+      }
+    });
+  })();
+
+  /* ---------------------------------------------------------------------
      GSAP: register plugins used elsewhere in this file. ScrollTrigger
      isn't driving anything yet (that lands in a later round) - this just
      gets the plumbing (and its Lenis sync, below) in place.
@@ -200,14 +255,6 @@ document.addEventListener('DOMContentLoaded', function () {
       entranceSettled = true;
     }
 
-    // A pure ease-in (sine.in, power1.in) stays too flat near progress 0 to
-    // clear "hear more"'s linear pace, collapsing the two together around
-    // the midpoint - blend in some linear speed to keep a faster floor
-    // early while still trailing the hero's rate.
-    function asideRightEase(p) {
-      return p * 0.7 + p * p * 0.3;
-    }
-
     var mm = gsap.matchMedia();
     mm.add({
       isMobile: '(max-width: 760px)',
@@ -224,22 +271,27 @@ document.addEventListener('DOMContentLoaded', function () {
       // hero's own 0->0.5 span, i.e. hero's final quarter overlaps with
       // About's start), and reuses the same "0.5 units = 1 viewport" pace
       // for its own sequence (0.375 to 0.875) that its combined sequence
-      // used previously, so it isn't rushed relative to before. A further
-      // HOLD units of nothing-scheduled time is appended after that as the
-      // static hold - mobile's is half of desktop's (0.1 vs 0.2 units,
-      // i.e. 0.2 vs 0.4 viewports), per this round. Grand total is
-      // therefore 0.975 units (195%) on mobile, 1.075 units (215%) on
-      // desktop - end is derived from it (units * 2 viewports/unit * 100%).
+      // used previously, so it isn't rushed relative to before. The static
+      // hold that used to follow (a placeholder tween padding the timeline
+      // out further, shrunk over several rounds - most recently 0.05/0.1
+      // units mobile/desktop) is now removed entirely: the pin releases
+      // immediately once About settles, right at ABOUT_END, rather than
+      // after an added pause. Grand total is therefore just 0.875 units
+      // (175%) on both breakpoints now (previously 0.925/0.975) - end is
+      // derived from it (units * 2 viewports/unit * 100%).
       var ABOUT_START = 0.375;
       var ABOUT_MID = 0.625;
       var ABOUT_END = 0.875;
-      var HOLD = isMobile ? 0.1 : 0.2;
-      var GRAND_END = ABOUT_END + HOLD;
-      // Reveal the header a short way into the hold (20% of it) rather than
-      // at a fixed fraction of the grand total - GRAND_END now differs by
-      // breakpoint, so a hardcoded fraction calibrated for one would fire
-      // at the wrong point (even before About settles) on the other.
-      var HEADER_REVEAL = (ABOUT_END + HOLD * 0.2) / GRAND_END;
+      // Body copy now starts once the heading's own tween (ABOUT_START to
+      // ABOUT_MID) is 40% done (was 25% last round), overlapping with
+      // most of it - its end point is unchanged (still ABOUT_END), so
+      // this only shortens (speeds up slightly) body's own reveal versus
+      // last round, which is fine.
+      var BODY_START = ABOUT_START + 0.40 * (ABOUT_MID - ABOUT_START);
+      var GRAND_END = ABOUT_END;
+      // Reveal the header right as the timeline completes (About settles)
+      // rather than partway through a hold, since there's no longer one.
+      var HEADER_REVEAL = 1;
 
       var tl = gsap.timeline({
         scrollTrigger: {
@@ -272,11 +324,14 @@ document.addEventListener('DOMContentLoaded', function () {
         tl.to(aboutIntro, { backgroundColor: 'rgb(' + bgRgb.join(',') + ')', ease: 'none', duration: ABOUT_END - ABOUT_START }, ABOUT_START);
       }
 
-      // Photo and heading now animate together and finish together at
-      // About's own midpoint; body copy starts there and runs to About's
-      // own completion. xPercent (not a fixed px offset) scales with each
-      // element's own width, so the off-screen start clears the viewport at
-      // any width - .about-intro has overflow:hidden to contain it either way.
+      // Photo and heading animate together and finish together at About's
+      // own midpoint. Body copy now starts at BODY_START (halfway through
+      // the heading's own tween, see above) and runs to About's own
+      // completion - overlapping with the heading's second half rather
+      // than waiting for it to finish. xPercent (not a fixed px offset)
+      // scales with each element's own width, so the off-screen start
+      // clears the viewport at any width - .about-intro has
+      // overflow:hidden to contain it either way.
       if (aboutPhoto && aboutHeading && aboutBody) {
         gsap.set(aboutPhoto, { xPercent: -100, opacity: 0 });
         gsap.set(aboutHeading, { xPercent: 100, opacity: 0 });
@@ -284,32 +339,38 @@ document.addEventListener('DOMContentLoaded', function () {
 
         tl.to(aboutPhoto, { xPercent: 0, opacity: 1, ease: 'none', duration: ABOUT_MID - ABOUT_START }, ABOUT_START);
         tl.to(aboutHeading, { xPercent: 0, opacity: 1, ease: 'none', duration: ABOUT_MID - ABOUT_START }, ABOUT_START);
-        tl.to(aboutBody, { xPercent: 0, opacity: 1, ease: 'none', duration: ABOUT_END - ABOUT_MID }, ABOUT_MID);
+        // Body's slide-in decelerates into its settled position (fast
+        // start, easing off) rather than the linear pace used everywhere
+        // else, split from its fade so the fade itself stays linear -
+        // same split already used for the aside-link parallax tweens
+        // (eased motion, linear opacity).
+        tl.to(aboutBody, { xPercent: 0, ease: 'power2.out', duration: ABOUT_END - BODY_START }, BODY_START);
+        tl.to(aboutBody, { opacity: 1, ease: 'none', duration: ABOUT_END - BODY_START }, BODY_START);
       }
 
-      // Nothing is scheduled from ABOUT_END to GRAND_END - GSAP otherwise
-      // auto-computes the timeline's own total duration as the max end time
-      // of its real children (0.875), which would silently stretch the
-      // whole sequence to fill the full (already-extended) pin distance
-      // and eliminate the hold entirely. This empty tween, targeting
-      // nothing, forces the timeline's real total to match GRAND_END so
-      // the scrollTrigger's scroll-distance-to-progress mapping lines up
-      // with what the position numbers above assume.
-      tl.to({}, { duration: GRAND_END - ABOUT_END }, ABOUT_END);
-
       whenEntranceSettled(function () {
+        // "hear more" and the contact links used to recede on their own
+        // distinct z-depth/ease curves, separate from the hero's own
+        // tween - on desktop the difference was too subtle to read as
+        // parallax (no scale was ever applied to these, only z-translate,
+        // which under perspective alone is a much weaker effect than
+        // hero's combined scale+z shrink), and the preference now is for
+        // them to recede as one unit WITH the hero rather than at their
+        // own rate anyway. Mirror heroShrink's own tween exactly (same
+        // scale/z/opacity/ease/duration/position) rather than a separate
+        // tween with matching-by-coincidence values, so they can't drift
+        // apart if hero's own tween ever changes.
+        var recedeWithHero = [];
         if (asideLeft) {
-          tl.to(asideLeft, { z: isMobile ? 0 : -300, opacity: 0, ease: 'none' }, 0);
+          recedeWithHero.push(asideLeft);
           asideLeft.classList.add('is-parallaxing');
         }
         if (asideRight) {
-          // opacity fades linearly like the other two (so it stays comparably
-          // visible throughout), but z recedes on its own curve - slower
-          // early, faster late - so its motion reads as distinct, not just
-          // a different endpoint
-          tl.to(asideRight, { opacity: 0, ease: 'none' }, 0);
-          tl.to(asideRight, { z: isMobile ? 0 : -550, ease: isMobile ? 'none' : asideRightEase }, 0);
+          recedeWithHero.push(asideRight);
           asideRight.classList.add('is-parallaxing');
+        }
+        if (recedeWithHero.length) {
+          tl.to(recedeWithHero, { scale: 0.7, z: isMobile ? 0 : -650, opacity: 0, ease: 'none' }, 0);
         }
         tl.progress(tl.progress()); // re-render at current scroll position now the tweens exist
       });

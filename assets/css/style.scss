@@ -79,19 +79,87 @@ h3 { font-size: 1.15rem; font-weight: 700; }
   transition: transform 0.5s var(--ease-out-expo), opacity 0.4s ease;
 }
 .site-header .wrap {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   height: 100%;
 }
 .site-header .logo {
-  font-family: var(--font-heading);
-  font-weight: 800;
-  font-size: 1.15rem;
+  display: flex;
+  align-items: center;
   text-decoration: none;
 }
-.site-header nav { display: flex; gap: 1.75rem; }
-.site-header nav a {
+.logo-wordmark {
+  /* Comfortably within the ~76px header without looking cramped or
+     oversized - width scales proportionally from the SVG's own aspect
+     ratio (block display avoids the few px of inline-image baseline gap). */
+  display: block;
+  height: 40px;
+  width: auto;
+}
+
+/* Nav toggle (hamburger) - same on both breakpoints, opens .site-nav below */
+.nav-toggle {
+  position: relative;
+  width: 26px;
+  height: 18px;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.nav-toggle-icon,
+.nav-toggle-icon::before,
+.nav-toggle-icon::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--color-text);
+  transition: transform 0.25s var(--ease-out-expo), opacity 0.2s ease;
+}
+.nav-toggle-icon { top: 50%; transform: translateY(-50%); }
+.nav-toggle-icon::before { top: -7px; }
+.nav-toggle-icon::after { top: 7px; }
+/* Open state morphs the 3 lines into an X - middle line fades out, the
+   other two rotate in place to cross over */
+.site-header.nav-open .nav-toggle-icon { background: transparent; }
+.site-header.nav-open .nav-toggle-icon::before { top: 0; transform: rotate(45deg); }
+.site-header.nav-open .nav-toggle-icon::after { top: 0; transform: rotate(-45deg); }
+
+/* Nav dropdown panel - anchored under the toggle, right-aligned within
+   .wrap (which is what's given position:relative above, not .site-header
+   itself, so it lines up with the header's own content width/padding
+   rather than the full viewport edge) */
+.site-nav {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  min-width: 170px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-hairline);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+  transition: opacity 0.25s var(--ease-out-expo), transform 0.25s var(--ease-out-expo);
+}
+.site-header.nav-open .site-nav {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.site-nav a {
   font-family: var(--font-accent);
   font-style: italic;
   font-weight: 500;
@@ -100,8 +168,8 @@ h3 { font-size: 1.15rem; font-weight: 700; }
   color: var(--color-text-muted);
   transition: color 0.15s ease;
 }
-.site-header nav a:hover,
-.site-header nav a.active { color: var(--color-text); }
+.site-nav a:hover,
+.site-nav a.active { color: var(--color-text); }
 
 /* Hero header stays hidden until the person scrolls past it */
 body.has-hero-header .site-header { transform: translateY(-100%); opacity: 0; pointer-events: none; }
@@ -174,14 +242,24 @@ body:not(.has-hero-header) main { padding-top: calc(var(--header-h) + 12px); }
   inset: 0;
 }
 /* .hero's own content (the shrinking name/tagline) is centered via flex
-   *within this box* - on mobile, where the wrapper can grow taller than
-   one viewport to fit About's content (see --about-content-height above),
-   inset:0 alone would stretch .hero to match that taller height too,
-   shifting its flex-centered content down and off the bottom of the
-   actual viewport. An explicit height pins .hero back to exactly one
-   viewport (top:0 from inset:0 above still anchors it) regardless of the
-   wrapper's own height, since .hero's content was never meant to need the
-   extra room - only .about-intro (which keeps plain inset:0, above) does. */
+   *within this box* - if the wrapper is taller than one viewport (e.g.
+   to fit About's content, see --about-content-height above), plain
+   inset:0 would stretch .hero to match that taller height too, shifting
+   its flex-centered content down and off the bottom of the actual
+   viewport. An explicit height pins .hero back to exactly one viewport
+   (top:0 from inset:0 above still anchors it) regardless of the
+   wrapper's own height.
+   Deliberately NOT given the same "grow to fit" treatment as the wrapper
+   and .about-intro above: unlike About, whose excess is meant to be
+   reached by continued scroll once the pin releases, .hero's content
+   (name/tagline/contact links) fades out early in the SAME scroll that
+   would be needed to reach it, and stays fixed in place throughout (it
+   isn't a child of the shrinking/scaling .hero-shrink) - so anything
+   pushed below the viewport here would already be invisible by the time
+   enough scroll happened to bring it into a still-pinned frame. Letting
+   .hero grow taller would trade a small, graceful CSS clip (on unusually
+   short viewports) for content becoming effectively unreachable at any
+   opacity worth seeing - worse, not better. */
 .hero-about-stack.is-stacked .hero {
   height: 100svh;
 }
@@ -200,6 +278,7 @@ body:not(.has-hero-header) main { padding-top: calc(var(--header-h) + 12px); }
   z-index: 1;
   min-height: 100svh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   overflow: hidden;
@@ -286,12 +365,60 @@ body.is-loaded .hero-aside { opacity: 1; transform: translateY(0); }
 .hero-aside.is-parallaxing { transition: none; }
 .hero-aside.is-parallaxing:hover { transition: opacity 0.2s ease; }
 
+/* hero-aside-right now wraps two separate contact links (email/phone)
+   instead of being a single <a> - stack them with a small gap, and
+   dim per-link on hover (not the whole block, which the generic
+   .hero-aside:hover above would otherwise do since it still carries
+   that class for the GSAP parallax/entrance treatment as one unit). */
+.hero-aside-right {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.hero-aside-right:hover { opacity: 1 !important; }
+.contact-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+.contact-link:hover { opacity: 0.6; }
+/* Separator between the two contact links - its own inert element (not
+   inside either <a>'s content/hitbox) so it never becomes part of
+   either link's clickable area; hidden on mobile, where the two lines
+   stack instead (see the two media queries below). */
+.contact-sep {
+  display: none;
+  color: var(--color-text-muted);
+}
+
 @media (min-width: 761px) {
-  .hero-aside-left { position: absolute; left: 15%; top: 70%; }
-  .hero-aside-right { position: absolute; right: 15%; top: 34%; }
+  /* Same pattern already used on mobile: contact links sit in normal
+     flow under the tagline, "hear more" stays absolutely positioned,
+     now bottom-right (was top-left-ish) to match the mobile pattern. */
+  /* Desktop only: email/phone on one line instead of mobile's stacked
+     pair - gap:0 since the separator's own margins (below) provide the
+     spacing instead, so it isn't double-applied on top of a flex gap. */
+  .hero-aside-right { margin-top: 1.25rem; flex-direction: row; align-items: baseline; gap: 0; }
+  .contact-sep { display: inline-block; margin: 0 0.75rem; }
+  .hero-aside-left { position: absolute; right: 12%; bottom: 10%; }
+  /* Desktop-only: hero-aside-right now sitting in-flow (rather than
+     absolutely positioned out of it) needs a bit more vertical room than
+     before. .hero's own height stays pinned to exactly one viewport (see
+     .is-stacked .hero above) rather than growing to fit - unlike About,
+     content pushed below the viewport here wouldn't be reachable later
+     (it fades out early in the same scroll that would reveal it, and
+     isn't part of the scaling/shrinking .hero-shrink that stays on
+     screen), so a graceful, contained clip is the safer trade-off than
+     letting the box grow and hiding content off-screen entirely. Shrink
+     the padding first instead, down to a 1.5rem floor, so real clipping
+     only shows up on unusually short desktop viewports rather than
+     common ones (verified clean at 1280x768, only ~sub-pixel at 700px,
+     and a modest ~25px/side at a very short 650px). Scoped to desktop
+     only - mobile already had this content in-flow before this round and
+     its own spacing was already tuned separately. */
+  .hero { padding: clamp(1.5rem, 9svh, 6rem) 1.5rem; }
 }
 @media (max-width: 760px) {
-  .hero { flex-direction: column; }
   .hero-aside-right { margin-top: 1.4rem; }
   .hero-aside-left {
     position: absolute;
@@ -456,6 +583,13 @@ body.is-loaded .play-icon-triangle { opacity: 1; transform: scale(1); }
      .is-playing, so only the transition itself is disabled here -
      the class-based opacity/transform rules still decide which one shows. */
   .reel-label, .reel-player {
+    transition: none !important;
+  }
+  /* Same idea for the nav menu: it still has two valid states (open/closed,
+     gated by .nav-open), just no animated hand-off between them - open/close
+     is instant. */
+  .nav-toggle-icon, .nav-toggle-icon::before, .nav-toggle-icon::after,
+  .site-nav {
     transition: none !important;
   }
 }
@@ -634,7 +768,6 @@ audio { width: 100%; height: 34px; filter: sepia(0.15) saturate(0.6); }
 /* Responsive ------------------------------------------------------------------ */
 @media (max-width: 760px) {
   .project-row { grid-template-columns: 1fr; row-gap: 0.35rem; }
-  .site-header nav { gap: 1.1rem; }
 }
 
 /* Focus visibility -------------------------------------------------------------- */
