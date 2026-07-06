@@ -242,14 +242,24 @@ body:not(.has-hero-header) main { padding-top: calc(var(--header-h) + 12px); }
   inset: 0;
 }
 /* .hero's own content (the shrinking name/tagline) is centered via flex
-   *within this box* - on mobile, where the wrapper can grow taller than
-   one viewport to fit About's content (see --about-content-height above),
-   inset:0 alone would stretch .hero to match that taller height too,
-   shifting its flex-centered content down and off the bottom of the
-   actual viewport. An explicit height pins .hero back to exactly one
-   viewport (top:0 from inset:0 above still anchors it) regardless of the
-   wrapper's own height, since .hero's content was never meant to need the
-   extra room - only .about-intro (which keeps plain inset:0, above) does. */
+   *within this box* - if the wrapper is taller than one viewport (e.g.
+   to fit About's content, see --about-content-height above), plain
+   inset:0 would stretch .hero to match that taller height too, shifting
+   its flex-centered content down and off the bottom of the actual
+   viewport. An explicit height pins .hero back to exactly one viewport
+   (top:0 from inset:0 above still anchors it) regardless of the
+   wrapper's own height.
+   Deliberately NOT given the same "grow to fit" treatment as the wrapper
+   and .about-intro above: unlike About, whose excess is meant to be
+   reached by continued scroll once the pin releases, .hero's content
+   (name/tagline/contact links) fades out early in the SAME scroll that
+   would be needed to reach it, and stays fixed in place throughout (it
+   isn't a child of the shrinking/scaling .hero-shrink) - so anything
+   pushed below the viewport here would already be invisible by the time
+   enough scroll happened to bring it into a still-pinned frame. Letting
+   .hero grow taller would trade a small, graceful CSS clip (on unusually
+   short viewports) for content becoming effectively unreachable at any
+   opacity worth seeing - worse, not better. */
 .hero-about-stack.is-stacked .hero {
   height: 100svh;
 }
@@ -268,6 +278,7 @@ body:not(.has-hero-header) main { padding-top: calc(var(--header-h) + 12px); }
   z-index: 1;
   min-height: 100svh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   overflow: hidden;
@@ -354,12 +365,48 @@ body.is-loaded .hero-aside { opacity: 1; transform: translateY(0); }
 .hero-aside.is-parallaxing { transition: none; }
 .hero-aside.is-parallaxing:hover { transition: opacity 0.2s ease; }
 
+/* hero-aside-right now wraps two separate contact links (email/phone)
+   instead of being a single <a> - stack them with a small gap, and
+   dim per-link on hover (not the whole block, which the generic
+   .hero-aside:hover above would otherwise do since it still carries
+   that class for the GSAP parallax/entrance treatment as one unit). */
+.hero-aside-right {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.hero-aside-right:hover { opacity: 1 !important; }
+.contact-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+.contact-link:hover { opacity: 0.6; }
+
 @media (min-width: 761px) {
-  .hero-aside-left { position: absolute; left: 15%; top: 70%; }
-  .hero-aside-right { position: absolute; right: 15%; top: 34%; }
+  /* Same pattern already used on mobile: contact links sit in normal
+     flow under the tagline, "hear more" stays absolutely positioned,
+     now bottom-right (was top-left-ish) to match the mobile pattern. */
+  .hero-aside-right { margin-top: 1.25rem; }
+  .hero-aside-left { position: absolute; right: 12%; bottom: 10%; }
+  /* Desktop-only: hero-aside-right now sitting in-flow (rather than
+     absolutely positioned out of it) needs a bit more vertical room than
+     before. .hero's own height stays pinned to exactly one viewport (see
+     .is-stacked .hero above) rather than growing to fit - unlike About,
+     content pushed below the viewport here wouldn't be reachable later
+     (it fades out early in the same scroll that would reveal it, and
+     isn't part of the scaling/shrinking .hero-shrink that stays on
+     screen), so a graceful, contained clip is the safer trade-off than
+     letting the box grow and hiding content off-screen entirely. Shrink
+     the padding first instead, down to a 1.5rem floor, so real clipping
+     only shows up on unusually short desktop viewports rather than
+     common ones (verified clean at 1280x768, only ~sub-pixel at 700px,
+     and a modest ~25px/side at a very short 650px). Scoped to desktop
+     only - mobile already had this content in-flow before this round and
+     its own spacing was already tuned separately. */
+  .hero { padding: clamp(1.5rem, 9svh, 6rem) 1.5rem; }
 }
 @media (max-width: 760px) {
-  .hero { flex-direction: column; }
   .hero-aside-right { margin-top: 1.4rem; }
   .hero-aside-left {
     position: absolute;
