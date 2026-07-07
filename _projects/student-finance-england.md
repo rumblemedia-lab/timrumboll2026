@@ -4,6 +4,7 @@ sector: Animation
 date: 2023-11-02
 excerpt: Narration for an animated explainer guiding students through the loan application process.
 featured_image: assets/images/project-placeholder-2.jpg
+featured_in_intro: true
 audio: sfe-sample.mp3
 duration: "1:15"
 ---

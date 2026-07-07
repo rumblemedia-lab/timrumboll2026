@@ -39,6 +39,7 @@ collections:
       - { label: "Date", name: "date", widget: "datetime" }
       - { label: "Short excerpt (shown in listings)", name: "excerpt", widget: "text" }
       - { label: "Featured image", name: "featured_image", widget: "image", media_folder: "/assets/images", public_folder: "/assets/images", required: false }
+      - { label: "Show in bento intro", name: "featured_in_intro", widget: "boolean", default: false, hint: "Curated zoom intro above the projects gallery - needs a featured image to take effect" }
       - { label: "Audio sample", name: "audio", widget: "file", media_folder: "/assets/audio", public_folder: "/assets/audio", required: false }
       - { label: "Duration (e.g. 0:52)", name: "duration", widget: "string", required: false }
       - { label: "Full write-up", name: "body", widget: "markdown" }
