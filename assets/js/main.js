@@ -680,12 +680,14 @@ document.addEventListener('DOMContentLoaded', function () {
      project's own tile as it naturally sits in that grid, then applies a
      single scale+translate transform to the WHOLE GRID CONTAINER (not
      per-tile) that visually zooms into just that tile's cell, filling
-     the viewport - then scrubs that same transform back to identity as
-     the section pins and scrolls, so the whole grid "pulls back" into
-     view as one motion, while every tile desaturates from monochrome to
-     full colour in step. A separate, independent pinned ScrollTrigger
-     from the hero/About one above - its own section, further down the
-     page, not part of that shared timeline.
+     the viewport WIDTH (deliberately not a "cover" fit - see the scale
+     calculation below) - then scrubs that same transform back to
+     identity as the section approaches and pins/scrolls, so the whole
+     grid "pulls back" into view as one motion, while every tile
+     desaturates from monochrome to full colour in step. A separate,
+     independent pinned ScrollTrigger from the hero/About one above - its
+     own section, further down the page, not part of that shared
+     timeline.
 
      A single container-level transform (this version) replaces an
      earlier per-tile GSAP Flip approach (see git history) - measuring
@@ -736,63 +738,127 @@ document.addEventListener('DOMContentLoaded', function () {
     var viewportW = window.innerWidth;
     var viewportH = window.innerHeight;
 
-    // Uniform "cover" scale - one number for both axes (never independent
-    // scaleX/scaleY, which is what distorted the image in an earlier
-    // version of this section) - sized so the hero's own cell fills the
-    // viewport, cropping slightly on the shorter axis rather than
-    // letterboxing.
-    var scale = Math.max(viewportW / heroRect.width, viewportH / heroRect.height);
+    // Width-only scale (not a Math.max "cover" fit) - one number for
+    // both axes regardless (never independent scaleX/scaleY, which is
+    // what distorted the image in an earlier version of this section),
+    // but sized purely so the hero's own cell fills the viewport WIDTH,
+    // guaranteeing no horizontal overflow. This can under-fill the
+    // viewport height (letterboxed above/below) or slightly over-fill it
+    // depending on the hero's own aspect ratio - .bento-stage's own
+    // overflow:hidden already contains either case.
+    var scale = viewportW / heroRect.width;
 
     // Hero's centre, and the grid's own offset from the stage, both as
-    // relative offsets rather than raw coordinates (see above).
+    // relative offsets rather than raw coordinates (see above) - true
+    // regardless of scroll position since they're purely a function of
+    // the stage/grid/tile's own internal, fixed layout (flexbox
+    // centring, grid-template-areas), never how far down the page the
+    // stage itself happens to sit.
     var heroCenterX = (heroRect.left - gridRect.left) + heroRect.width / 2;
     var heroCenterY = (heroRect.top - gridRect.top) + heroRect.height / 2;
     var gridOffsetX = gridRect.left - stageRect.left;
     var gridOffsetY = gridRect.top - stageRect.top;
 
-    // The translate (in the grid's own transform-origin:0 0 coordinate
-    // space - see style.scss) needed so that, once scaled, the hero's
-    // centre lands on the viewport's own centre - which, since
-    // .bento-stage is pinned exactly to the viewport, is also the
-    // stage's own centre.
-    var startX = (viewportW / 2 - gridOffsetX) - scale * heroCenterX;
-    var startY = (viewportH / 2 - gridOffsetY) - scale * heroCenterY;
+    // The "from" translate (in the grid's own transform-origin:0 0
+    // coordinate space - see style.scss) needed so that, at the full
+    // starting scale, the hero's centre lands on the viewport's own
+    // centre. X needs no live component - .bento-stage's left edge never
+    // moves during vertical scrolling either way - but Y does (see
+    // render() below).
+    var fromX = (viewportW / 2 - gridOffsetX) - scale * heroCenterX;
 
+    // Exponential (not linear) scale curve, using the real computed
+    // scale/1 as its bounds - matches the reference GSAP bento-zoom
+    // demo's own easing choice for this effect, so the zoom reads as
+    // accelerating rather than a flat, mechanical scale change.
+    var ease = gsap.parseEase('expoScale(' + scale + ',1)');
     var maxProgress = 0;
 
-    var pinTl = gsap.timeline({
-      scrollTrigger: {
-        trigger: stage,
-        start: 'top top',
-        end: '+=150%',
-        scrub: true,
-        pin: true,
-        onUpdate: function (self) {
-          // Colour reveal tracks the same progress driving the zoom below,
-          // but only ever ratchets forward: once a tile's reached full
-          // colour it stays that way even if the user scrolls back up
-          // past this section (per earlier decision) - unlike the zoom
-          // itself, which is a normal, fully-reversible scrub.
-          maxProgress = Math.max(maxProgress, self.progress);
-          var gray = 1 - maxProgress;
-          images.forEach(function (img) {
-            img.style.filter = 'grayscale(' + gray + ')';
-          });
-        }
+    // Renders the zoom/colour-reveal at a given point along the FULL
+    // 0-1 journey (see the two ScrollTriggers below - between them they
+    // cover this whole range, just at different points along the page).
+    // Interpolates from the computed "from" values toward the fixed
+    // identity end state (x:0, y:0, scale:1 - the grid's own untouched,
+    // natural layout) rather than recomputing the centring formula fresh
+    // at every progress value: that formula is only valid for finding
+    // the STARTING point, not a general "correct transform for this
+    // scale" - at scale 1 it doesn't (and shouldn't) resolve to 0 itself,
+    // since the hero's natural resting position isn't viewport-centred.
+    function render(globalProgress) {
+      // Colour reveal tracks the same progress driving the zoom, but only
+      // ever ratchets forward: once a tile's reached full colour it stays
+      // that way even if the user scrolls back up past this section (per
+      // earlier decision) - unlike the zoom itself, which is a normal,
+      // fully-reversible scrub.
+      maxProgress = Math.max(maxProgress, globalProgress);
+      var gray = 1 - maxProgress;
+      images.forEach(function (img) {
+        img.style.filter = 'grayscale(' + gray + ')';
+      });
+
+      var eased = ease(globalProgress);
+
+      // .bento-stage's own on-screen top: once actually pinned this is
+      // always 0 (that's what pinning means), but during the earlier,
+      // still-unpinned approach phase the stage is just an ordinary
+      // in-flow element still scrolling normally toward the top, so this
+      // "from" value is a moving target until the section is pinned -
+      // re-measuring it live is what keeps the hero centred on the
+      // CURRENT viewport throughout the approach too, not just once
+      // pinned (while still resolving to exactly 0 once eased reaches 1,
+      // regardless of the live value used, since it's cancelled out
+      // algebraically either way).
+      var liveStageTop = stage.getBoundingClientRect().top;
+      var fromY = (viewportH / 2 - liveStageTop - gridOffsetY) - scale * heroCenterY;
+
+      gsap.set(grid, {
+        x: gsap.utils.interpolate(fromX, 0, eased),
+        y: gsap.utils.interpolate(fromY, 0, eased),
+        scale: gsap.utils.interpolate(scale, 1, eased)
+      });
+    }
+
+    // The zoom needs to visibly start before the section is actually
+    // pinned - scrolling should already be doing something as it
+    // approaches, not just once it locks at the top. pin:true always
+    // locks the section at whatever screen position it occupies the
+    // moment its own start condition fires, though, so simply moving
+    // that start earlier would pin it sitting partway down the viewport
+    // for the section's entire hold rather than full-screen. Instead,
+    // two separate ScrollTriggers share one continuous progress: an
+    // unpinned one covers the approach (the section scrolling up from
+    // fully below the viewport to its top reaching the very top) and
+    // drives the first APPROACH_FRACTION of the zoom, then the pinned
+    // one - which still only ever engages at 'top top', so the pinned
+    // state is genuinely full-screen throughout - covers the rest.
+    var APPROACH_FRACTION = 0.35;
+
+    ScrollTrigger.create({
+      trigger: stage,
+      start: 'top bottom',
+      end: 'top top',
+      scrub: true,
+      onUpdate: function (self) {
+        render(self.progress * APPROACH_FRACTION);
       }
     });
-    pinTl.fromTo(grid,
-      { x: startX, y: startY, scale: scale },
-      {
-        x: 0, y: 0, scale: 1, duration: 1,
-        // Exponential (not linear) scale curve, using the real computed
-        // scale/1 as its bounds - matches the reference GSAP bento-zoom
-        // demo's own easing choice for this effect, so the zoom reads as
-        // accelerating rather than a flat, mechanical scale change.
-        ease: 'expoScale(' + scale + ',1)'
-      },
-      0
-    );
+
+    ScrollTrigger.create({
+      trigger: stage,
+      start: 'top top',
+      end: '+=150%',
+      scrub: true,
+      pin: true,
+      onUpdate: function (self) {
+        render(APPROACH_FRACTION + self.progress * (1 - APPROACH_FRACTION));
+      }
+    });
+
+    // Render the starting (globalProgress 0) state immediately, rather
+    // than waiting for the first scroll-driven update - matches every
+    // other scrubbed sequence on this page already looking correct
+    // before any scrolling happens.
+    render(0);
   }
   initBentoIntro();
 
