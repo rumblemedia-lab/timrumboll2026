@@ -97,12 +97,30 @@ title: Home
   {% assign bento_projects = bento_projects | slice: 0, 8 %}
   {% assign bento_count = 8 %}
 {% endif %}
-{% if bento_count > 0 %}
-<section class="section bento-intro" id="bento-intro">
+{% assign bento_urls = bento_projects | map: "url" %}
+{% assign remaining_projects = site.projects | where_exp: "project", "project.featured_image" | sort: 'date' | reverse %}
+
+{% if remaining_projects.size > 0 %}
+{% comment %}
+  One continuous grid, not two separate sections: the bento's curated
+  tiles (data-count of them, in bento_projects' own order - the zoom/
+  reveal mechanism in main.js is entirely unchanged and untouched by
+  this) render first, then every remaining project with a
+  featured_image (everything not already shown above, sorted by date)
+  just continues auto-flowing into the same grid below, reusing the
+  gallery-tile lightbox/lazy-loading pattern uniformly across all of
+  it - both the curated tiles and the appended ones.
+{% endcomment %}
+<section class="section" id="projects-gallery" style="border-bottom:none;">
   <div class="wrap">
     <div class="section-head reveal">
+      {% if bento_count > 0 %}
       <p class="eyebrow">Featured work</p>
       <h2>Pull back for a few favourites</h2>
+      {% else %}
+      <p class="eyebrow">Projects gallery</p>
+      <h2>A closer look at the work</h2>
+      {% endif %}
     </div>
   </div>
   <div class="bento-stage" id="bentoStage">
@@ -114,34 +132,26 @@ title: Home
         initBentoIntro), so this single tile instead gets the same plain
         scroll-reveal every other .reveal element on the page uses.
       {% endcomment %}
-      <div class="bento-tile{% if bento_count == 1 %} reveal{% endif %}">
-        <img src="{{ project.featured_image | relative_url }}" alt="{{ project.client }}" loading="lazy">
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-</section>
-{% endif %}
-
-<section class="section" style="border-bottom:none;">
-  <div class="wrap">
-    <div class="section-head reveal">
-      <p class="eyebrow">Projects gallery</p>
-      <h2>A closer look at the work</h2>
-      <p>Click a project to see it larger.</p>
-    </div>
-    <div class="project-gallery">
-      {% assign gallery_projects = site.projects | sort: 'date' | reverse | where_exp: "project", "project.featured_image" %}
-      {% for project in gallery_projects %}
-      <button type="button" class="gallery-tile reveal" aria-expanded="false" aria-label="Enlarge {{ project.client }}" data-full="{{ project.featured_image | relative_url }}">
+      <button type="button" class="bento-tile gallery-tile{% if bento_count == 1 %} reveal{% endif %}" aria-expanded="false" aria-label="Enlarge {{ project.client }}" data-full="{{ project.featured_image | relative_url }}">
         <img src="{{ project.featured_image | relative_url }}" alt="{{ project.client }}" loading="lazy">
         <span class="gallery-caption">{{ project.client }}</span>
       </button>
       {% endfor %}
+      {% for project in remaining_projects %}
+      {% unless bento_urls contains project.url %}
+      <button type="button" class="gallery-tile reveal" aria-expanded="false" aria-label="Enlarge {{ project.client }}" data-full="{{ project.featured_image | relative_url }}">
+        <img src="{{ project.featured_image | relative_url }}" alt="{{ project.client }}" loading="lazy">
+        <span class="gallery-caption">{{ project.client }}</span>
+      </button>
+      {% endunless %}
+      {% endfor %}
     </div>
+  </div>
+  <div class="wrap">
     <p style="margin-top:2rem;" class="reveal"><a class="btn btn-ghost" href="{{ '/projects/' | relative_url }}">Browse the full project log &rarr;</a></p>
   </div>
 </section>
+{% endif %}
 
 <div class="lightbox" id="lightbox" aria-hidden="true">
   <button type="button" class="lightbox-close" id="lightboxClose" aria-label="Close">&times;</button>

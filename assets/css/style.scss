@@ -782,22 +782,28 @@ audio { width: 100%; height: 34px; filter: sepia(0.15) saturate(0.6); }
 .project-row .project-excerpt { color: var(--color-text-muted); margin-top: 0.3rem; font-size: 0.95rem; }
 .project-row:hover .project-client { opacity: 0.6; }
 
-/* Bento zoom-out intro (homepage) ----------------------------------------------
-   A curated set of projects (site.projects flagged featured_in_intro, with
-   a featured_image - see index.html), always laid out in the ONE compact
-   grid below - no separate "zoomed in" composition exists anymore. main.js
-   measures the most recent project's own tile as it naturally sits in
-   that grid, then applies a single scale+translate transform to the
-   WHOLE GRID CONTAINER (not per-tile) that visually zooms into just that
-   tile's cell, filling the viewport - then scrubs that same transform
-   back to identity (scale 1, no translate) as the section pins and
-   scrolls, so the whole grid "pulls back" into view as one motion. This
-   replaces an earlier per-tile GSAP Flip version of this section (see
-   git history) - a single container-level transform sidesteps that
-   approach's per-tile state-diffing entirely, and with it a whole
-   category of coordinate-mismatch bugs that took three rounds of fixes.
-   Skipped server-side entirely when no projects qualify (see index.html),
-   so there's no empty section here.
+/* Bento zoom-out intro + projects gallery (homepage) ---------------------------
+   ONE continuous grid, not two separate sections: a curated set of
+   projects (site.projects flagged featured_in_intro, with a
+   featured_image - see index.html) fills the compact grid below first
+   (data-count of them, tiles a-h), then every remaining project with a
+   featured_image just continues auto-flowing into the SAME grid element
+   underneath (see .gallery-tile:not(.bento-tile) further down) - one
+   grid, uniformly lightbox/lazy-load-enabled throughout, not a curated
+   section handing off to a visually distinct gallery section.
+
+   The zoom mechanism itself only concerns the first data-count tiles,
+   entirely unchanged: main.js measures the most recent project's own
+   tile as it naturally sits in the grid, then applies a single
+   scale+translate transform to the WHOLE GRID CONTAINER (not per-tile)
+   that visually zooms into just that tile's cell, filling the viewport
+   - then scrubs that same transform back to identity (scale 1, no
+   translate) as the section pins and scrolls, so the whole grid "pulls
+   back" into view as one motion. This replaces an earlier per-tile GSAP
+   Flip version of this section (see git history) - a single container-
+   level transform sidesteps that approach's per-tile state-diffing
+   entirely, and with it a whole category of coordinate-mismatch bugs
+   that took three rounds of fixes.
 
    .bento-grid's [data-count="N"] blocks below are hand-authored per count
    (1-8, capped at 8 - see index.html) rather than a single fixed 8-slot
@@ -810,6 +816,9 @@ audio { width: 100%; height: 34px; filter: sepia(0.15) saturate(0.6); }
    letter of that count's own area names, so the mapping stays correct
    across all of them. This is both the zoom's resting/settled state and
    the entire reduced-motion/no-JS static fallback, unchanged either way.
+   Any further (non-bento) tiles beyond those named areas simply don't
+   match these nth-child rules, so they're untouched by them and fall
+   back to the grid's own default auto-placement instead.
 
    With only one qualifying project there's no grid to reveal, so this
    whole zoom-out mechanism doesn't apply - main.js skips it for that case
@@ -837,17 +846,21 @@ audio { width: 100%; height: 34px; filter: sepia(0.15) saturate(0.6); }
   will-change: transform;
 }
 
-.bento-tile {
-  position: relative;
-  overflow: hidden;
-  border-radius: 6px;
-  background: var(--color-surface);
+/* Every tile in this grid (bento's own curated ones and the continuing
+   ones alike) is also a .gallery-tile (see further down) for its base
+   box model/lightbox styling - except .gallery-tile's own aspect-ratio:
+   4/3, which (confirmed by testing) actually overrides a stretched grid
+   item's height rather than being harmlessly ignored once a definite
+   width exists - it must NOT apply here, since a bento tile's height is
+   supposed to come entirely from its own grid-area's row span instead
+   (that's what gives the mosaic its varied tile shapes). The compound
+   selector (not a plain .bento-tile rule) is deliberate: both classes
+   are equal (single-class) specificity, so without it, source order -
+   .gallery-tile's own rule is defined later - would win instead. */
+.bento-tile.gallery-tile {
+  aspect-ratio: auto;
 }
 .bento-tile img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
   filter: grayscale(1);
 }
 
@@ -929,16 +942,14 @@ audio { width: 100%; height: 34px; filter: sepia(0.15) saturate(0.6); }
   grid-auto-rows: 90px;
 }
 
-/* Projects gallery (homepage) ------------------------------------------------
-   Same auto-fill/minmax grid pattern as .reel-grid above, for consistency.
-   Each tile is a <button> (not a link - it opens the lightbox in place,
-   nothing to navigate to) wrapping a lazy-loaded image, with a caption
-   revealed on hover/focus. */
-.project-gallery {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 1rem;
-}
+/* Gallery tile (homepage) -----------------------------------------------------
+   Shared by every tile in .bento-grid above - both the curated bento
+   ones (also .bento-tile, positioned via the named grid-areas above)
+   and every project appended after them (plain .gallery-tile, no
+   grid-area of their own, so they fall into the grid's normal auto-
+   placement). Each is a <button> (not a link - it opens the lightbox
+   in place, nothing to navigate to) wrapping a lazy-loaded image, with
+   a caption revealed on hover/focus. */
 .gallery-tile {
   position: relative;
   display: block;
@@ -950,6 +961,17 @@ audio { width: 100%; height: 34px; filter: sepia(0.15) saturate(0.6); }
   overflow: hidden;
   background: var(--color-surface);
   cursor: pointer;
+}
+/* Auto-placed (non-bento) tiles fall into a single grid cell (1 column,
+   1 row) at whatever column width/row height that count's own layout
+   above uses - the same units the bento mosaic's own single-cell tiles
+   (e.g. "b"/"c" in most counts) are built from, so it reads as one more
+   cell in the same mosaic rather than a visually distinct block appended
+   underneath it. As with .bento-tile.gallery-tile above, aspect-ratio:4/3
+   would otherwise override that grid-driven size (confirmed by testing -
+   same bug, same fix), so it's disabled here too. */
+.bento-grid .gallery-tile:not(.bento-tile) {
+  aspect-ratio: auto;
 }
 .gallery-tile img {
   width: 100%;
