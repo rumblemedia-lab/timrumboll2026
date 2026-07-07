@@ -782,12 +782,14 @@ audio { width: 100%; height: 34px; filter: sepia(0.15) saturate(0.6); }
 .project-row .project-excerpt { color: var(--color-text-muted); margin-top: 0.3rem; font-size: 0.95rem; }
 .project-row:hover .project-client { opacity: 0.6; }
 
-/* Bento zoom intro (homepage) -------------------------------------------------
+/* Bento zoom-out intro (homepage) ----------------------------------------------
    A curated set of projects (site.projects flagged featured_in_intro, with
-   a featured_image - see index.html) laid out in a compact CSS grid that
-   main.js Flip-zooms into a much larger version of the same grid as the
-   section pins and scrubs with scroll. Skipped server-side entirely when
-   no projects qualify (see index.html), so there's no empty section here.
+   a featured_image - see index.html) that starts with the single most
+   recent one filling the whole viewport, then Flip-zooms OUT as the
+   section pins and scrubs with scroll, settling into the compact grid of
+   all curated tiles below (with the other tiles fading in alongside it).
+   Skipped server-side entirely when no projects qualify (see index.html),
+   so there's no empty section here.
 
    .bento-grid's [data-count="N"] blocks below are hand-authored per count
    (1-8, capped at 8 - see index.html) rather than a single fixed 8-slot
@@ -795,17 +797,19 @@ audio { width: 100%; height: 34px; filter: sepia(0.15) saturate(0.6); }
    sized for exactly that many tiles, so fewer curated projects produce a
    smaller, still-fully-tiled layout instead of empty placeholder gaps.
    .bento-tile:nth-child(N) below maps every count's Nth tile (in the same
-   date-sorted order the query renders them) to the Nth letter of that
-   count's own area names, so the mapping stays correct across all of them.
+   date-sorted order the query renders them, so :first-child is always the
+   most recent project) to the Nth letter of that count's own area names,
+   so the mapping stays correct across all of them. This compact layout is
+   the END state of the zoom (main.js animates OUT of it, via a temporary
+   .is-hero-start applied only to capture Flip's "before" state - see
+   below) as well as the entire reduced-motion/no-JS static fallback,
+   unchanged either way.
 
-   Each [data-count] rule pairs a compact block (small, fixed-px tracks -
-   the resting layout, and also the entire reduced-motion/no-JS fallback
-   since nothing else applies then) with a same-selector .is-target block
-   (much larger vw-based tracks, same grid-template-areas so each tile
-   keeps its slot). main.js only ever applies .is-target for one
-   synchronous instant (to capture Flip's "after" measurements) and
-   reverts it immediately after - it's never visible mid-transition,
-   only used as a measurement target for the Flip tween. */
+   With only one qualifying project there's no grid to reveal, so this
+   whole zoom-out mechanism doesn't apply - main.js skips it for that case
+   and the single tile instead gets the plain .reveal scroll-fade already
+   used everywhere else on the page (see index.html), always in full
+   colour (below), rather than a forced "reveal down to just itself". */
 .bento-stage {
   position: relative;
   height: 100svh;
@@ -819,19 +823,6 @@ audio { width: 100%; height: 34px; filter: sepia(0.15) saturate(0.6); }
   gap: 0.75rem;
   width: 100%;
   max-width: 900px;
-}
-.bento-grid.is-target {
-  max-width: none;
-  /* max(), not a flat 40vw: on a narrow/tall mobile viewport, 40vw alone
-     (sized with desktop widths in mind) comes out smaller than some of
-     the compact rows' own fixed px heights above, shrinking rather than
-     growing on that axis - the vh term keeps the target meaningfully
-     bigger than compact on every tested width. String interpolation
-     forces this through as a literal CSS max() - see the height rule
-     earlier in this file for the same Sass-vs-CSS-max ambiguity (Sass
-     tries to evaluate it at compile time and errors on mismatched vw/vh
-     units, rather than passing a CSS-native max() through untouched). */
-  --bento-cell: #{"max(40vw, 55vh)"};
 }
 
 .bento-tile {
@@ -857,19 +848,43 @@ audio { width: 100%; height: 34px; filter: sepia(0.15) saturate(0.6); }
 .bento-tile:nth-child(7) { grid-area: g; }
 .bento-tile:nth-child(8) { grid-area: h; }
 
+/* Single-project case (see above) - always full colour, no scroll-driven
+   reveal mechanism exists to ever turn this on otherwise. */
+.bento-grid[data-count="1"] .bento-tile img { filter: none; }
+
+/* Temporary "before" composition for Flip's fromState capture (see
+   main.js): the hero tile (:first-child, the most recent project, also
+   still one of the tiles in the compact grid above) fills the entire
+   viewport, all other tiles are invisible. .bento-stage is already an
+   exact viewport-sized box (100svh, full width) sitting in normal
+   document flow, so position:absolute + inset:0 against it (not
+   position:fixed) fills the viewport just the same, escaping past
+   .bento-grid the same way .hero/.about-intro escape past their own
+   parent elsewhere in this file - but crucially, unlike position:fixed,
+   it stays a normal document-flow coordinate. This matters here because
+   main.js measures this composition once at page load (scrollY 0) yet
+   the animation actually plays back much further down the page - a
+   position:fixed capture's viewport-relative coordinates don't survive
+   that gap (confirmed by testing: the hero rendered far off-screen). */
+.bento-grid.is-hero-start .bento-tile:first-child {
+  position: absolute;
+  inset: 0;
+}
+.bento-grid.is-hero-start .bento-tile:not(:first-child) {
+  opacity: 0;
+}
+
 .bento-grid[data-count="1"] {
   grid-template-columns: 1fr;
   grid-template-areas: "a";
   grid-auto-rows: 320px;
 }
-.bento-grid.is-target[data-count="1"] { grid-auto-rows: var(--bento-cell); }
 
 .bento-grid[data-count="2"] {
   grid-template-columns: repeat(3, 1fr);
   grid-template-areas: "a a b";
   grid-auto-rows: 280px;
 }
-.bento-grid.is-target[data-count="2"] { grid-template-columns: repeat(3, var(--bento-cell)); grid-auto-rows: var(--bento-cell); }
 
 .bento-grid[data-count="3"] {
   grid-template-columns: repeat(3, 1fr);
@@ -878,7 +893,6 @@ audio { width: 100%; height: 34px; filter: sepia(0.15) saturate(0.6); }
     "a a c";
   grid-auto-rows: 140px;
 }
-.bento-grid.is-target[data-count="3"] { grid-template-columns: repeat(3, var(--bento-cell)); grid-auto-rows: var(--bento-cell); }
 
 .bento-grid[data-count="4"] {
   grid-template-columns: repeat(4, 1fr);
@@ -887,7 +901,6 @@ audio { width: 100%; height: 34px; filter: sepia(0.15) saturate(0.6); }
     "a a b d";
   grid-auto-rows: 130px;
 }
-.bento-grid.is-target[data-count="4"] { grid-template-columns: repeat(4, var(--bento-cell)); grid-auto-rows: var(--bento-cell); }
 
 .bento-grid[data-count="5"] {
   grid-template-columns: repeat(4, 1fr);
@@ -896,7 +909,6 @@ audio { width: 100%; height: 34px; filter: sepia(0.15) saturate(0.6); }
     "a a d e";
   grid-auto-rows: 130px;
 }
-.bento-grid.is-target[data-count="5"] { grid-template-columns: repeat(4, var(--bento-cell)); grid-auto-rows: var(--bento-cell); }
 
 .bento-grid[data-count="6"] {
   grid-template-columns: repeat(4, 1fr);
@@ -906,7 +918,6 @@ audio { width: 100%; height: 34px; filter: sepia(0.15) saturate(0.6); }
     "e e f f";
   grid-auto-rows: 100px;
 }
-.bento-grid.is-target[data-count="6"] { grid-template-columns: repeat(4, var(--bento-cell)); grid-auto-rows: var(--bento-cell); }
 
 .bento-grid[data-count="7"] {
   grid-template-columns: repeat(4, 1fr);
@@ -917,7 +928,6 @@ audio { width: 100%; height: 34px; filter: sepia(0.15) saturate(0.6); }
     "e f g g";
   grid-auto-rows: 90px;
 }
-.bento-grid.is-target[data-count="7"] { grid-template-columns: repeat(4, var(--bento-cell)); grid-auto-rows: var(--bento-cell); }
 
 .bento-grid[data-count="8"] {
   grid-template-columns: repeat(4, 1fr);
@@ -928,7 +938,6 @@ audio { width: 100%; height: 34px; filter: sepia(0.15) saturate(0.6); }
     "e f h h";
   grid-auto-rows: 90px;
 }
-.bento-grid.is-target[data-count="8"] { grid-template-columns: repeat(4, var(--bento-cell)); grid-auto-rows: var(--bento-cell); }
 
 /* Projects gallery (homepage) ------------------------------------------------
    Same auto-fill/minmax grid pattern as .reel-grid above, for consistency.

@@ -102,13 +102,19 @@ title: Home
   <div class="wrap">
     <div class="section-head reveal">
       <p class="eyebrow">Featured work</p>
-      <h2>Zoom in on a few favourites</h2>
+      <h2>Pull back for a few favourites</h2>
     </div>
   </div>
   <div class="bento-stage" id="bentoStage">
     <div class="bento-grid" id="bentoGrid" data-count="{{ bento_count }}">
       {% for project in bento_projects %}
-      <div class="bento-tile">
+      {% comment %}
+        With only one qualifying project there's no grid to reveal - main.js
+        skips the whole Flip/pin/zoom mechanism entirely for that case (see
+        initBentoIntro), so this single tile instead gets the same plain
+        scroll-reveal every other .reveal element on the page uses.
+      {% endcomment %}
+      <div class="bento-tile{% if bento_count == 1 %} reveal{% endif %}">
         <img src="{{ project.featured_image | relative_url }}" alt="{{ project.client }}" loading="lazy">
       </div>
       {% endfor %}
