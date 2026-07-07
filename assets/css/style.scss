@@ -784,10 +784,18 @@ audio { width: 100%; height: 34px; filter: sepia(0.15) saturate(0.6); }
 
 /* Bento zoom-out intro (homepage) ----------------------------------------------
    A curated set of projects (site.projects flagged featured_in_intro, with
-   a featured_image - see index.html) that starts with the single most
-   recent one filling the whole viewport, then Flip-zooms OUT as the
-   section pins and scrubs with scroll, settling into the compact grid of
-   all curated tiles below (with the other tiles fading in alongside it).
+   a featured_image - see index.html), always laid out in the ONE compact
+   grid below - no separate "zoomed in" composition exists anymore. main.js
+   measures the most recent project's own tile as it naturally sits in
+   that grid, then applies a single scale+translate transform to the
+   WHOLE GRID CONTAINER (not per-tile) that visually zooms into just that
+   tile's cell, filling the viewport - then scrubs that same transform
+   back to identity (scale 1, no translate) as the section pins and
+   scrolls, so the whole grid "pulls back" into view as one motion. This
+   replaces an earlier per-tile GSAP Flip version of this section (see
+   git history) - a single container-level transform sidesteps that
+   approach's per-tile state-diffing entirely, and with it a whole
+   category of coordinate-mismatch bugs that took three rounds of fixes.
    Skipped server-side entirely when no projects qualify (see index.html),
    so there's no empty section here.
 
@@ -798,12 +806,10 @@ audio { width: 100%; height: 34px; filter: sepia(0.15) saturate(0.6); }
    smaller, still-fully-tiled layout instead of empty placeholder gaps.
    .bento-tile:nth-child(N) below maps every count's Nth tile (in the same
    date-sorted order the query renders them, so :first-child is always the
-   most recent project) to the Nth letter of that count's own area names,
-   so the mapping stays correct across all of them. This compact layout is
-   the END state of the zoom (main.js animates OUT of it, via a temporary
-   .is-hero-start applied only to capture Flip's "before" state - see
-   below) as well as the entire reduced-motion/no-JS static fallback,
-   unchanged either way.
+   most recent project, i.e. the one main.js zooms in on) to the Nth
+   letter of that count's own area names, so the mapping stays correct
+   across all of them. This is both the zoom's resting/settled state and
+   the entire reduced-motion/no-JS static fallback, unchanged either way.
 
    With only one qualifying project there's no grid to reveal, so this
    whole zoom-out mechanism doesn't apply - main.js skips it for that case
@@ -823,6 +829,12 @@ audio { width: 100%; height: 34px; filter: sepia(0.15) saturate(0.6); }
   gap: 0.75rem;
   width: 100%;
   max-width: 900px;
+  /* main.js's scale/translate math (see initBentoIntro) is derived
+     assuming the origin sits at the grid's own top-left corner, not the
+     default centre - keeping this in CSS since it's a fixed value the
+     transform math depends on, never itself animated. */
+  transform-origin: 0 0;
+  will-change: transform;
 }
 
 .bento-tile {
@@ -851,28 +863,6 @@ audio { width: 100%; height: 34px; filter: sepia(0.15) saturate(0.6); }
 /* Single-project case (see above) - always full colour, no scroll-driven
    reveal mechanism exists to ever turn this on otherwise. */
 .bento-grid[data-count="1"] .bento-tile img { filter: none; }
-
-/* Temporary "before" composition for Flip's fromState capture (see
-   main.js): the hero tile (:first-child, the most recent project, also
-   still one of the tiles in the compact grid above) fills the entire
-   viewport, all other tiles are invisible. .bento-stage is already an
-   exact viewport-sized box (100svh, full width) sitting in normal
-   document flow, so position:absolute + inset:0 against it (not
-   position:fixed) fills the viewport just the same, escaping past
-   .bento-grid the same way .hero/.about-intro escape past their own
-   parent elsewhere in this file - but crucially, unlike position:fixed,
-   it stays a normal document-flow coordinate. This matters here because
-   main.js measures this composition once at page load (scrollY 0) yet
-   the animation actually plays back much further down the page - a
-   position:fixed capture's viewport-relative coordinates don't survive
-   that gap (confirmed by testing: the hero rendered far off-screen). */
-.bento-grid.is-hero-start .bento-tile:first-child {
-  position: absolute;
-  inset: 0;
-}
-.bento-grid.is-hero-start .bento-tile:not(:first-child) {
-  opacity: 0;
-}
 
 .bento-grid[data-count="1"] {
   grid-template-columns: 1fr;
