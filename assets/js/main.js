@@ -139,9 +139,9 @@ document.addEventListener('DOMContentLoaded', function () {
   /* ---------------------------------------------------------------------
      GSAP: register plugins used elsewhere in this file.
      ------------------------------------------------------------------- */
-  var hasGsap = !!(window.gsap && window.ScrollTrigger && window.SplitText && window.Flip && window.EasePack);
+  var hasGsap = !!(window.gsap && window.ScrollTrigger && window.SplitText && window.EasePack);
   if (hasGsap) {
-    gsap.registerPlugin(ScrollTrigger, SplitText, Flip, EasePack);
+    gsap.registerPlugin(ScrollTrigger, SplitText, EasePack);
   }
 
   /* ---------------------------------------------------------------------
@@ -673,15 +673,28 @@ document.addEventListener('DOMContentLoaded', function () {
   initHeroScramble();
 
   /* ---------------------------------------------------------------------
-     Bento zoom-out intro (projects gallery preamble) - the most recent
-     curated project (site.projects flagged featured_in_intro, see
-     index.html) starts filling the whole viewport, then Flip-zooms OUT as
-     the section pins and scrubs with scroll, settling into the compact
-     grid of every curated tile (the other tiles fading in alongside it),
-     while all of them desaturate from monochrome to full colour in step.
-     A separate, independent pinned ScrollTrigger from the hero/About one
-     above - its own section, further down the page, not part of that
-     shared timeline.
+     Bento zoom-out intro (projects gallery preamble) - the compact grid
+     of curated projects (site.projects flagged featured_in_intro, see
+     index.html) is the ONLY layout that exists; there's no separate
+     "zoomed in" composition. Instead, this measures the most recent
+     project's own tile as it naturally sits in that grid, then applies a
+     single scale+translate transform to the WHOLE GRID CONTAINER (not
+     per-tile) that visually zooms into just that tile's cell, filling
+     the viewport - then scrubs that same transform back to identity as
+     the section pins and scrolls, so the whole grid "pulls back" into
+     view as one motion, while every tile desaturates from monochrome to
+     full colour in step. A separate, independent pinned ScrollTrigger
+     from the hero/About one above - its own section, further down the
+     page, not part of that shared timeline.
+
+     A single container-level transform (this version) replaces an
+     earlier per-tile GSAP Flip approach (see git history) - measuring
+     one tile and transforming its parent sidesteps Flip's per-tile
+     state-diffing (and the coordinate-mismatch bugs that came with it)
+     entirely, and also means the other tiles need no special opacity/
+     visibility handling of their own: they're simply wherever the
+     zoomed-in transform puts them (off-screen or cropped at the edges)
+     until the same transform scrubs back to identity.
 
      Skipped server-side entirely when no projects qualify (see
      index.html), so there's nothing here to wire up in that case. With
@@ -691,8 +704,8 @@ document.addEventListener('DOMContentLoaded', function () {
      already forced to full colour (see style.scss). Also skipped (falls
      back to the plain static compact grid, all tiles visible, already
      full colour - see style.scss's reduced-motion block) when reduced
-     motion is preferred or GSAP/Flip/EasePack didn't load, same
-     convention as the hero pin above.
+     motion is preferred or GSAP/EasePack didn't load, same convention as
+     the hero pin above.
      ------------------------------------------------------------------- */
   function initBentoIntro() {
     var stage = document.getElementById('bentoStage');
@@ -702,44 +715,48 @@ document.addEventListener('DOMContentLoaded', function () {
     var tiles = grid.querySelectorAll('.bento-tile');
     if (tiles.length < 2) return;
     var images = [];
-    var siblings = [];
-    tiles.forEach(function (t, i) {
+    tiles.forEach(function (t) {
       var img = t.querySelector('img');
       if (img) images.push(img);
-      if (i > 0) siblings.push(t);
     });
 
-    // toState = the grid's normal/default compact layout, as it already
-    // sits in the DOM - no temp class needed, unchanged from before.
-    var toState = Flip.getState(tiles);
+    // Plain DOM measurement of the hero tile (the most recent project,
+    // already first in the grid's own date-sorted order) as it actually
+    // sits in the grid's normal, unchanged layout - no state capture of
+    // any kind needed. All three rects are read at the same instant, so
+    // the *offsets* between them are meaningful regardless of where the
+    // page happens to be scrolled to right now (this runs once at page
+    // load) versus where .bento-stage will actually be once pinned to
+    // the viewport later - only relative geometry is used below, never
+    // an absolute/raw coordinate, for exactly that reason.
+    var hero = tiles[0];
+    var heroRect = hero.getBoundingClientRect();
+    var gridRect = grid.getBoundingClientRect();
+    var stageRect = stage.getBoundingClientRect();
+    var viewportW = window.innerWidth;
+    var viewportH = window.innerHeight;
 
-    // fromState = temporarily switch to .is-hero-start (the first/most-
-    // recent tile fills the viewport, every other tile is invisible -
-    // see style.scss), measure, then revert - synchronous, so that
-    // composition is never actually painted.
-    grid.classList.add('is-hero-start');
-    var fromState = Flip.getState(tiles);
-    grid.classList.remove('is-hero-start');
+    // Uniform "cover" scale - one number for both axes (never independent
+    // scaleX/scaleY, which is what distorted the image in an earlier
+    // version of this section) - sized so the hero's own cell fills the
+    // viewport, cropping slightly on the shorter axis rather than
+    // letterboxing.
+    var scale = Math.max(viewportW / heroRect.width, viewportH / heroRect.height);
 
-    // Not paused: a paused nested timeline is excluded from its parent's
-    // own duration calculation in GSAP, which would leave pinTl (below)
-    // measuring a duration of 0 and nothing to actually scrub - harmless
-    // here since pinTl's own ScrollTrigger (scrub:true) already holds its
-    // playhead entirely, so flipTl never free-plays once nested into it.
-    var flipTl = Flip.fromTo(fromState, toState, {
-      duration: 1,
-      // scale:true animates via a GPU-friendly transform (scaleX/scaleY)
-      // instead of Flip's default of tweening literal width/height (a
-      // layout property, reflowing every frame) - important for a scrubbed
-      // effect like this one that updates continuously with scroll.
-      scale: true,
-      // Exponential (not linear) scale curve - matches the reference GSAP
-      // bento-zoom demo's own easing choice for this effect, so the zoom
-      // reads as accelerating rather than a flat, mechanical scale change.
-      // Args swapped from the old zoom-IN version of this section (was
-      // expoScale(0.5,7)) to match this round's reversed start/end sizes.
-      ease: 'expoScale(7,0.5)'
-    });
+    // Hero's centre, and the grid's own offset from the stage, both as
+    // relative offsets rather than raw coordinates (see above).
+    var heroCenterX = (heroRect.left - gridRect.left) + heroRect.width / 2;
+    var heroCenterY = (heroRect.top - gridRect.top) + heroRect.height / 2;
+    var gridOffsetX = gridRect.left - stageRect.left;
+    var gridOffsetY = gridRect.top - stageRect.top;
+
+    // The translate (in the grid's own transform-origin:0 0 coordinate
+    // space - see style.scss) needed so that, once scaled, the hero's
+    // centre lands on the viewport's own centre - which, since
+    // .bento-stage is pinned exactly to the viewport, is also the
+    // stage's own centre.
+    var startX = (viewportW / 2 - gridOffsetX) - scale * heroCenterX;
+    var startY = (viewportH / 2 - gridOffsetY) - scale * heroCenterY;
 
     var maxProgress = 0;
 
@@ -764,13 +781,18 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       }
     });
-    pinTl.add(flipTl, 0);
-    // Flip's own position/size tweening doesn't touch opacity for tiles
-    // that persist across both states (only for ones actually entering/
-    // leaving the DOM, which none of these are) - handled explicitly here
-    // instead, on the same scrubbed timeline, rather than assuming Flip
-    // covers it.
-    pinTl.fromTo(siblings, { opacity: 0 }, { opacity: 1, ease: 'none', duration: 1 }, 0);
+    pinTl.fromTo(grid,
+      { x: startX, y: startY, scale: scale },
+      {
+        x: 0, y: 0, scale: 1, duration: 1,
+        // Exponential (not linear) scale curve, using the real computed
+        // scale/1 as its bounds - matches the reference GSAP bento-zoom
+        // demo's own easing choice for this effect, so the zoom reads as
+        // accelerating rather than a flat, mechanical scale change.
+        ease: 'expoScale(' + scale + ',1)'
+      },
+      0
+    );
   }
   initBentoIntro();
 
