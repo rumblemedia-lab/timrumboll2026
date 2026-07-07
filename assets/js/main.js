@@ -673,21 +673,26 @@ document.addEventListener('DOMContentLoaded', function () {
   initHeroScramble();
 
   /* ---------------------------------------------------------------------
-     Bento zoom intro (projects gallery preamble) - a curated set of
-     projects (site.projects flagged featured_in_intro, see index.html)
-     laid out in a compact CSS grid that Flip-zooms into a much larger
-     version of the same grid as the section pins and scrubs with scroll,
-     while each tile's image desaturates from monochrome to full colour
-     in step. A separate, independent pinned ScrollTrigger from the
-     hero/About one above - its own section, further down the page, not
-     part of that shared timeline.
+     Bento zoom-out intro (projects gallery preamble) - the most recent
+     curated project (site.projects flagged featured_in_intro, see
+     index.html) starts filling the whole viewport, then Flip-zooms OUT as
+     the section pins and scrubs with scroll, settling into the compact
+     grid of every curated tile (the other tiles fading in alongside it),
+     while all of them desaturate from monochrome to full colour in step.
+     A separate, independent pinned ScrollTrigger from the hero/About one
+     above - its own section, further down the page, not part of that
+     shared timeline.
 
      Skipped server-side entirely when no projects qualify (see
-     index.html), so there's nothing here to wire up in that case. Also
-     skipped (falls back to the plain static compact grid already in the
-     markup, already forced to full colour - see style.scss's reduced-
-     motion block) when reduced motion is preferred or GSAP/Flip/EasePack
-     didn't load, same convention as the hero pin above.
+     index.html), so there's nothing here to wire up in that case. With
+     only one, there's no grid to reveal, so the whole zoom mechanism is
+     skipped below too - that single tile instead gets the plain .reveal
+     scroll-fade already applied to it server-side (see index.html),
+     already forced to full colour (see style.scss). Also skipped (falls
+     back to the plain static compact grid, all tiles visible, already
+     full colour - see style.scss's reduced-motion block) when reduced
+     motion is preferred or GSAP/Flip/EasePack didn't load, same
+     convention as the hero pin above.
      ------------------------------------------------------------------- */
   function initBentoIntro() {
     var stage = document.getElementById('bentoStage');
@@ -695,32 +700,33 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!stage || !grid || prefersReducedMotion || !hasGsap) return;
 
     var tiles = grid.querySelectorAll('.bento-tile');
-    if (!tiles.length) return;
+    if (tiles.length < 2) return;
     var images = [];
-    tiles.forEach(function (t) {
+    var siblings = [];
+    tiles.forEach(function (t, i) {
       var img = t.querySelector('img');
       if (img) images.push(img);
+      if (i > 0) siblings.push(t);
     });
 
-    // The grid is left in its compact CSS state (that's also the reduced-
-    // motion/no-JS static fallback - see style.scss) - capture the "after"
-    // state by temporarily switching to the much-larger .is-target grid
-    // (same grid-template-areas, bigger tracks), measuring, then
-    // reverting - synchronous, so the larger layout is never painted.
-    grid.classList.add('is-target');
-    var targetState = Flip.getState(tiles);
-    grid.classList.remove('is-target');
+    // toState = the grid's normal/default compact layout, as it already
+    // sits in the DOM - no temp class needed, unchanged from before.
+    var toState = Flip.getState(tiles);
 
-    // Flip.to() (not .from()/.fromTo()) because the live DOM right now,
-    // above, IS the "before" state (compact) - this animates the tiles
-    // AS THEY CURRENTLY SIT to the given targetState.
-    //
+    // fromState = temporarily switch to .is-hero-start (the first/most-
+    // recent tile fills the viewport, every other tile is invisible -
+    // see style.scss), measure, then revert - synchronous, so that
+    // composition is never actually painted.
+    grid.classList.add('is-hero-start');
+    var fromState = Flip.getState(tiles);
+    grid.classList.remove('is-hero-start');
+
     // Not paused: a paused nested timeline is excluded from its parent's
     // own duration calculation in GSAP, which would leave pinTl (below)
     // measuring a duration of 0 and nothing to actually scrub - harmless
     // here since pinTl's own ScrollTrigger (scrub:true) already holds its
     // playhead entirely, so flipTl never free-plays once nested into it.
-    var flipTl = Flip.to(targetState, {
+    var flipTl = Flip.fromTo(fromState, toState, {
       duration: 1,
       // scale:true animates via a GPU-friendly transform (scaleX/scaleY)
       // instead of Flip's default of tweening literal width/height (a
@@ -729,8 +735,10 @@ document.addEventListener('DOMContentLoaded', function () {
       scale: true,
       // Exponential (not linear) scale curve - matches the reference GSAP
       // bento-zoom demo's own easing choice for this effect, so the zoom
-      // reads as accelerating rather than a flat, mechanical scale-up.
-      ease: 'expoScale(0.5,7)'
+      // reads as accelerating rather than a flat, mechanical scale change.
+      // Args swapped from the old zoom-IN version of this section (was
+      // expoScale(0.5,7)) to match this round's reversed start/end sizes.
+      ease: 'expoScale(7,0.5)'
     });
 
     var maxProgress = 0;
@@ -757,6 +765,12 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
     pinTl.add(flipTl, 0);
+    // Flip's own position/size tweening doesn't touch opacity for tiles
+    // that persist across both states (only for ones actually entering/
+    // leaving the DOM, which none of these are) - handled explicitly here
+    // instead, on the same scrubbed timeline, rather than assuming Flip
+    // covers it.
+    pinTl.fromTo(siblings, { opacity: 0 }, { opacity: 1, ease: 'none', duration: 1 }, 0);
   }
   initBentoIntro();
 
