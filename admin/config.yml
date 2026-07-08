@@ -5,8 +5,7 @@ backend:
   name: github
   repo: rumblemedia-lab/timrumboll2026
   branch: main
-  base_url: https://your-oauth-proxy.example.com  # <-- update this (see README)
-
+  base_url: https://decap-proxy.tim-rumboll.workers.dev  
 # Where Decap writes uploaded audio/image files
 media_folder: "assets/uploads"
 public_folder: "/assets/uploads"
