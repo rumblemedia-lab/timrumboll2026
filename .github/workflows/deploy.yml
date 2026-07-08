@@ -32,7 +32,7 @@ jobs:
           server-dir: ./public_html/    # adjust to match your hosting's web root
 
 
-deploy-pages:
+  deploy-pages:
     runs-on: ubuntu-latest
     permissions:
       pages: write
